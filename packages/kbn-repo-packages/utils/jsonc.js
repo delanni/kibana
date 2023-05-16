@@ -21,4 +21,16 @@ function parse(jsonWithComments) {
   );
 }
 
-module.exports = { parse };
+/**
+ * @param {string} jsonWithComments
+ * @returns {unknown}
+ */
+function parseOrThrow(jsonWithComments) {
+  try {
+    return parse(jsonWithComments);
+  } catch (error) {
+    throw new Error(`Invalid JSONc: ${error.message}`);
+  }
+}
+
+module.exports = { parse, parseOrThrow };
