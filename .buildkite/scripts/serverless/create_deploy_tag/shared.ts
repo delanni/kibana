@@ -8,6 +8,7 @@
 
 import axios from 'axios';
 
+import * as fs from 'fs';
 import { getExec } from './mock_exec';
 import { GitCommitExtract } from './info_sections/commit_info';
 import { BuildkiteBuildExtract } from './info_sections/build_info';
@@ -67,20 +68,23 @@ export interface CommitWithStatuses extends GitCommitExtract {
 
 export function sendSlackMessage(payload: any) {
   if (process.env.TEST_DEPLOY_TAGGER_SLACK_WEBHOOK_URL) {
+    fs.writeFileSync('slack.json', JSON.stringify(payload, null, 2));
+    buildkite.uploadArtifacts('slack.json');
+
     return axios
       .post(
         process.env.TEST_DEPLOY_TAGGER_SLACK_WEBHOOK_URL,
-        typeof payload === 'string' ? payload : JSON.stringify(payload)
+        typeof payload === 'string' ? payload : JSON.stringify(payload),
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       )
       .catch((error) => {
         if (axios.isAxiosError(error) && error.response) {
-          console.error(
-            "Couldn't send slack message.",
-            error.response.status,
-            error.response.statusText,
-            error.response.data || '<no response data>',
-            error.message
-          );
+          const errorMessage = `[${error.response.status}] ${error.response.statusText}: ${error.response.data} - ${error.message}`;
+          console.error("Couldn't send slack message.", errorMessage);
         } else {
           console.error("Couldn't send slack message.", error.message);
         }
