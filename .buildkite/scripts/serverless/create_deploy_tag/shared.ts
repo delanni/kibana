@@ -66,35 +66,10 @@ export interface CommitWithStatuses extends GitCommitExtract {
 }
 
 export function sendSlackMessage(payload: any) {
-  if (process.env.DRY_RUN?.match(/(1|true)/i)) {
-    const message =
-      typeof payload === 'string'
-        ? payload
-        : JSON.stringify(
-            payload,
-            // The slack playground doesn't like long strings
-            (_key, value) => (value?.length > 301 ? value.slice(0, 300) : value),
-            0
-          );
-    const slackPlaygroundLink = `https://app.slack.com/block-kit-builder/#${encodeURIComponent(
-      message
-    )}`;
-
-    buildkite.setAnnotation(
-      DRY_RUN_CTX,
-      'warning',
-      `Preview slack message <a href="${slackPlaygroundLink}">here</a>.`
-    );
-    console.log('DRY_RUN, not sending slack message:', slackPlaygroundLink);
-
-    return Promise.resolve();
-  } else if (!process.env.DEPLOY_TAGGER_SLACK_WEBHOOK_URL) {
-    console.log('No SLACK_WEBHOOK_URL set, not sending slack message');
-    return Promise.resolve();
-  } else {
+  if (process.env.TEST_DEPLOY_TAGGER_SLACK_WEBHOOK_URL) {
     return axios
       .post(
-        process.env.DEPLOY_TAGGER_SLACK_WEBHOOK_URL,
+        process.env.TEST_DEPLOY_TAGGER_SLACK_WEBHOOK_URL,
         typeof payload === 'string' ? payload : JSON.stringify(payload)
       )
       .catch((error) => {
@@ -103,6 +78,7 @@ export function sendSlackMessage(payload: any) {
             "Couldn't send slack message.",
             error.response.status,
             error.response.statusText,
+            error.response.data || '<no response data>',
             error.message
           );
         } else {

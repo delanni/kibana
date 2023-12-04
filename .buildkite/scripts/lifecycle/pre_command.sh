@@ -77,10 +77,10 @@ EOF
 {
   CI_STATS_BUILD_ID="$(buildkite-agent meta-data get ci_stats_build_id --default '')"
   export CI_STATS_BUILD_ID
-  
+
   CI_STATS_TOKEN="$(retry 5 5 vault read -field=api_token secret/kibana-issues/dev/kibana_ci_stats)"
   export CI_STATS_TOKEN
-  
+
   CI_STATS_HOST="$(retry 5 5 vault read -field=api_host secret/kibana-issues/dev/kibana_ci_stats)"
   export CI_STATS_HOST
 
@@ -141,6 +141,9 @@ export SYNTHETICS_REMOTE_KIBANA_URL
 
 DEPLOY_TAGGER_SLACK_WEBHOOK_URL=${DEPLOY_TAGGER_SLACK_WEBHOOK_URL:-"$(retry 5 5 vault read -field=DEPLOY_TAGGER_SLACK_WEBHOOK_URL secret/kibana-issues/dev/kibana-serverless-release-tools)"}
 export DEPLOY_TAGGER_SLACK_WEBHOOK_URL
+
+TEST_DEPLOY_TAGGER_SLACK_WEBHOOK_URL=${DEPLOY_TAGGER_SLACK_WEBHOOK_URL:-"$(retry 5 5 vault read -field=TEST_DEPLOY_TAGGER_SLACK_WEBHOOK_URL secret/kibana-issues/dev/kibana-serverless-release-tools)"}
+export TEST_DEPLOY_TAGGER_SLACK_WEBHOOK_URL
 
 # Setup Failed Test Reporter Elasticsearch credentials
 {

@@ -333,7 +333,7 @@ async function sendReleaseSlackAnnouncement({
   const mainMessage = [
     `:ship_it_parrot: Promotion of ${compareLink} to QA has been <${process.env.BUILDKITE_BUILD_URL}|initiated>!\n`,
     `*Remember:* Promotion to Staging is currently a manual process and will proceed once the build is signed off in QA.\n`,
-    `cc: @kibana-serverless-promotion-notify`,
+    `cc: @alex.szabo`,
   ];
 
   const linksSection = {
