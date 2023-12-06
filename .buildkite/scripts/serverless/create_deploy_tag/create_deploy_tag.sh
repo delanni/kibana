@@ -12,8 +12,7 @@ fi
 echo "--- Creating deploy tag $DEPLOY_TAG at $KIBANA_COMMIT_SHA"
 
 # Set git identity to whomever triggered the buildkite job
-#git config user.email "$BUILDKITE_BUILD_CREATOR_EMAIL"
-git config user.email "taggy.mctagman@gmail.com"
+git config user.email "$BUILDKITE_BUILD_CREATOR_EMAIL"
 git config user.name "$BUILDKITE_BUILD_CREATOR"
 
 # Create a tag for the deploy
