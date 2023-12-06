@@ -147,11 +147,7 @@ Your deployment will appear <a href='https://buildkite.com/elastic/kibana-server
         })
       ).data;
 
-      await sendReleaseSlackAnnouncement({
-        targetCommitData,
-        currentCommitSha,
-        deployTag,
-      });
+      console.log({ targetCommitData, currentCommitSha, deployTag });
     },
     instructionStyle: 'success',
     display: true,
@@ -302,6 +298,7 @@ async function tryCall(fn: any, ...args: any[]) {
   }
 }
 
+// @ts-ignore
 async function sendReleaseSlackAnnouncement({
   targetCommitData,
   currentCommitSha,
