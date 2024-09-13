@@ -54,6 +54,16 @@ export async function bootstrap({ configs, cliArgs, applyConfigOverrides }: Boot
 
   rootLogger.info('Kibana is starting');
 
+  let o = 0;
+  setInterval(() => {
+    // eslint-disable-next-line no-console
+    console.log('XIXO');
+    rootLogger.info('AXIX');
+    if (o++ > 100) {
+      process.exit(0);
+    }
+  }, 10000);
+
   cliLogger.debug('Kibana configurations evaluated in this order: ' + env.configs.join(', '));
 
   process.on('SIGHUP', () => reloadConfiguration());
