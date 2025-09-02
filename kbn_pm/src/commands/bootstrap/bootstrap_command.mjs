@@ -104,6 +104,28 @@ export const command = {
       }
     });
 
+    const backgroundTasks = [
+      validate
+        ? time('validate dependencies', async () => {
+            // now that deps are installed we can import `@kbn/yarn-lock-validator`
+            const { readYarnLock, validateDependencies } = External['@kbn/yarn-lock-validator']();
+            await validateDependencies(log, await readYarnLock());
+            log.success('yarn.lock analysis completed without any issues');
+          })
+        : undefined,
+      vscodeConfig
+        ? time('update vscode config', async () => {
+            // Update vscode settings
+            const moonArgs = ['run', 'kibana:update-vscode-config'];
+            if (forceInstall) {
+              moonArgs.push('--force', '--updateCache');
+            }
+            await run('moon', moonArgs);
+            log.success('vscode config updated');
+          })
+        : undefined,
+    ];
+
     await time('pre-build webpack bundles for packages', async () => {
       log.info('pre-build webpack bundles for packages');
       const moonArgs = ['run', ':build-webpack'];
@@ -123,26 +145,7 @@ export const command = {
       await sortPackageJson(log);
     });
 
-    await Promise.all([
-      validate
-        ? time('validate dependencies', async () => {
-            // now that deps are installed we can import `@kbn/yarn-lock-validator`
-            const { readYarnLock, validateDependencies } = External['@kbn/yarn-lock-validator']();
-            await validateDependencies(log, await readYarnLock());
-          })
-        : undefined,
-      vscodeConfig
-        ? time('update vscode config', async () => {
-            // Update vscode settings
-            const moonArgs = ['run', 'kibana:update-vscode-config'];
-            if (forceInstall) {
-              moonArgs.push('--force', '--updateCache');
-            }
-            await run('moon', moonArgs);
-            log.success('vscode config updated');
-          })
-        : undefined,
-    ]);
+    await Promise.all(backgroundTasks);
 
     log.success('bootstrap complete');
   },

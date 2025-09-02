@@ -113,6 +113,4 @@ export async function validateDependencies(log: SomeDevLog, yarnLock: YarnLock) 
 
     process.exit(1);
   }
-
-  log.success('yarn.lock analysis completed without any issues');
 }
