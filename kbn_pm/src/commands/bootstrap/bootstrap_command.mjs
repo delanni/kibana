@@ -62,7 +62,6 @@ export const command = {
     const quiet = args.getBooleanValue('quiet') ?? false;
     const vscodeConfig =
       !IS_CI && (args.getBooleanValue('vscode') ?? !process.env.KBN_BOOTSTRAP_NO_VSCODE);
-    const allowRoot = args.getBooleanValue('allow-root') ?? false;
     const forceInstall = args.getBooleanValue('force-install');
     const shouldInstall =
       forceInstall || !(await areNodeModulesPresent()) || !(await checkYarnIntegrity(log));
@@ -105,18 +104,40 @@ export const command = {
       }
     });
 
+    const backgroundTasks = [
+      validate
+        ? time('validate dependencies', async () => {
+            // now that deps are installed we can import `@kbn/yarn-lock-validator`
+            const { readYarnLock, validateDependencies } = External['@kbn/yarn-lock-validator']();
+            await validateDependencies(log, await readYarnLock());
+            log.success('yarn.lock analysis completed without any issues');
+          })
+        : undefined,
+      vscodeConfig
+        ? time('update vscode config', async () => {
+            // Update vscode settings
+            const moonArgs = ['run', 'kibana:update-vscode-config'];
+            if (forceInstall) {
+              moonArgs.push('--force', '--updateCache');
+            }
+            await run('moon', moonArgs);
+            log.success('vscode config updated');
+          })
+        : undefined,
+    ];
+
     await time('pre-build webpack bundles for packages', async () => {
       log.info('pre-build webpack bundles for packages');
-      await run(
-        'yarn',
-        ['kbn', 'build-shared']
-          .concat(quiet ? ['--quiet'] : [])
-          .concat(forceInstall ? ['--no-cache'] : [])
-          .concat(allowRoot ? ['--allow-root'] : []),
-        {
-          pipe: true,
-        }
-      );
+      const moonArgs = ['run', ':build-webpack'];
+      if (quiet) {
+        moonArgs.push('--quiet');
+      }
+      if (forceInstall) {
+        moonArgs.push('--updateCache', '--force');
+      }
+      await run('moon', moonArgs, {
+        pipe: !quiet,
+      });
       log.success('shared webpack bundles built');
     });
 
@@ -124,21 +145,8 @@ export const command = {
       await sortPackageJson(log);
     });
 
-    await Promise.all([
-      validate
-        ? time('validate dependencies', async () => {
-            // now that deps are installed we can import `@kbn/yarn-lock-validator`
-            const { readYarnLock, validateDependencies } = External['@kbn/yarn-lock-validator']();
-            await validateDependencies(log, await readYarnLock());
-          })
-        : undefined,
-      vscodeConfig
-        ? time('update vscode config', async () => {
-            // Update vscode settings
-            await run('node', ['scripts/update_vscode_config']);
-            log.success('vscode config updated');
-          })
-        : undefined,
-    ]);
+    await Promise.all(backgroundTasks);
+
+    log.success('bootstrap complete');
   },
 };

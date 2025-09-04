@@ -18,6 +18,19 @@ tasks:
       cache: false
   bootstrap:
     script: yarn kbn bootstrap
+  update-vscode-config:
+    script: node scripts/update_vscode_config.js
+    inputs:
+      - "packages/kbn-managed-vscode-config/src/**/*.ts"
+      - "packages/kbn-managed-vscode-config/index.ts"
+      - "packages/kbn-managed-vscode-config-cli/index.ts"
+      - "packages/kbn-kibana-manifest-schema/src/**/*.ts"
+    outputs:
+      - ".vscode/settings.json"
+      - ".vscode/kibana-*.json"
+    options:
+      cache: true
+
 
 workspace:
   inheritedTasks:
