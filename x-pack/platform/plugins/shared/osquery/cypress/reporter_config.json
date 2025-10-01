@@ -3,8 +3,8 @@
   "reporterOptions": {
     "html": false,
     "json": true,
-    "mochaFile": "../../../../../target/kibana-osquery/cypress/results/TEST-osquery-cypress-[hash].xml",
+    "mochaFile": "$repoRoot/target/kibana-osquery/cypress/results/TEST-osquery-cypress-[hash].xml",
     "overwrite": false,
-    "reportDir": "../../../../../target/kibana-osquery/cypress/results"
+    "reportDir": "$repoRoot/target/kibana-osquery/cypress/results"
   }
 }

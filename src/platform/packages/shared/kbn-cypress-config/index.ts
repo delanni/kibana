@@ -12,9 +12,12 @@ import { defineConfig } from 'cypress';
 import wp from '@cypress/webpack-preprocessor';
 import { NodeLibsBrowserPlugin } from '@kbn/node-libs-browser-webpack-plugin';
 
+import { expandConfigPaths } from './src/util/expand_config_paths';
+
 export function defineCypressConfig(options?: Cypress.ConfigOptions<any>) {
   return defineConfig({
     ...options,
+    reporterOptions: expandConfigPaths(options?.reporterOptions),
     e2e: {
       ...options?.e2e,
       setupNodeEvents(on, config) {
