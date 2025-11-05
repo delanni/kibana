@@ -48,9 +48,6 @@ const mockClient: MetricsExperienceClient = {
     ],
   }),
   getFields: async (params, signal) => ({ fields: [], total: 0, page: 1 }),
-  getIndexPatternMetadata: async (params, signal) => ({
-    indexPatternMetadata: {},
-  }),
 } as MetricsExperienceClient;
 
 // Wrapper component with all required providers
