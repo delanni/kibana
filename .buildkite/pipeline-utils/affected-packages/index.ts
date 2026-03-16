@@ -11,6 +11,9 @@ import { findPackageForPath } from './package_lookup';
 import { getAffectedPackagesGit } from './strategy_git';
 import { getAffectedPackagesMoon } from './strategy_moon';
 
+export * from './const';
+export * from './util';
+
 /**
  * Configuration for affected package detection
  */

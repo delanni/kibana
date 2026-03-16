@@ -24,9 +24,14 @@ import DISABLED_JEST_CONFIGS from '../../disabled_jest_configs.json';
 import SHARDED_JEST_CONFIGS from '../../sharded_jest_configs.json';
 import { serverless, stateful } from '../../ftr_configs_manifests.json';
 import { filterEmptyJestConfigs } from './get_tests_from_config';
-import { getAffectedPackages, filterFilesByAffectedPackages } from '../affected-packages';
+import {
+  getAffectedPackages,
+  filterFilesByAffectedPackages,
+  touchedCriticalFiles,
+  NO_SELECTIVE_TESTS_LABEL,
+  CRITICAL_FILES_JEST_UNIT_TESTS,
+} from '../affected-packages';
 import { collectEnvFromLabels, expandAgentQueue, getRequiredEnv } from '#pipeline-utils';
-import { NO_SELECTIVE_TESTS_LABEL } from '#pipeline-utils/affected-packages/const';
 
 const NO_SELECTIVE_TESTS = process.env.GITHUB_LABELS?.includes(NO_SELECTIVE_TESTS_LABEL);
 
@@ -230,8 +235,11 @@ export async function pickTestGroupRunOrder() {
     includeDownstream: true,
     logging: false,
   });
+
   const filteredJestUnitConfigs =
-    !NO_SELECTIVE_TESTS && affectedPackages
+    !NO_SELECTIVE_TESTS &&
+    affectedPackages &&
+    !touchedCriticalFiles(jestUnitConfigs, CRITICAL_FILES_JEST_UNIT_TESTS)
       ? filterFilesByAffectedPackages(jestUnitConfigs, affectedPackages)
       : jestUnitConfigs;
   console.warn(
