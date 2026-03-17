@@ -62,7 +62,7 @@ import { getAffectedPackages } from '../affected-packages';
 const affectedPackages = await getAffectedPackages(
   'main',  // merge base
   {
-    strategy: 'git',       // default, can also be 'moon' or 'disabled'
+    strategy: 'git',       // default, can also be 'moon'
     includeDownstream: true,
     logging: false,
     ignorePatterns: ['**/*.md', 'docs/**']
@@ -82,7 +82,7 @@ const affectedPackages = await getAffectedPackages(
 );
 // Returns: Set<string> | null
 // - Set<string>: affected package IDs
-// - null: skip filtering (disabled/no merge base/critical files changed)
+// - null: skip filtering (no merge base/critical files changed)
 
 // Step 2: Filter any file list
 const filteredFiles = filterFilesByPackages(
@@ -101,11 +101,11 @@ const filteredFiles = filterFilesByPackages(
 
 | Variable               | Values                          | CLI default  | Programmatic default |
 |------------------------|---------------------------------|--------------|----------------------|
-| `AFFECTED_STRATEGY`    | `git`, `moon`, `disabled`       | `git`        | `git`                |
+| `AFFECTED_STRATEGY`    | `git`, `moon`                   | `git`        | `git`                |
 | `AFFECTED_DOWNSTREAM`  | `true`, `false`                 | `false`      | `true`               |
 | `AFFECTED_LOGGING`     | `true`, `false`                 | `false`      | `true`               |
 | `AFFECTED_IGNORE`      | comma-separated globs           | —            | —                    |
-| `GITHUB_PR_MERGE_BASE` | any git ref                    | `origin/main`| —                    |
+| `GITHUB_PR_MERGE_BASE` | any git ref                     | `origin/main`| —                    |
 
 ## How It Works
 

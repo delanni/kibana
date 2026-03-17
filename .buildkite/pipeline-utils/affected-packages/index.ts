@@ -12,7 +12,7 @@ import { getAffectedModulesGit } from './strategy_git';
 import { getAffectedProjectsMoon } from './strategy_moon';
 
 export interface AffectedPackagesConfig {
-  strategy: 'git' | 'moon' | 'disabled';
+  strategy: 'git' | 'moon';
   includeDownstream: boolean;
   logging: boolean;
   /** Glob patterns for changed files to exclude before module resolution (git strategy only). */
@@ -20,23 +20,17 @@ export interface AffectedPackagesConfig {
 }
 
 /**
- * Returns affected package IDs, or null when filtering should be skipped
- * (strategy disabled, no merge base, or detection error).
+ * Returns affected package IDs
+ * Throws an error if the merge base is not found or if there is an error during the detection process
  */
 export async function getAffectedPackages(
   mergeBase: string | undefined,
   config: AffectedPackagesConfig = getConfigFromEnv()
-): Promise<Set<string> | null> {
+): Promise<Set<string>> {
   const log = config.logging ? console.warn : () => {};
 
-  if (config.strategy === 'disabled') {
-    log('Affected package filtering is disabled');
-    return null;
-  }
-
   if (!mergeBase) {
-    log('No merge base found - skipping filtering');
-    return null;
+    throw new Error('No merge base found');
   }
 
   log('--- Detecting Affected Packages');
@@ -53,8 +47,7 @@ export async function getAffectedPackages(
 
     return affectedPackages;
   } catch (error) {
-    console.error('Error during affected package detection:', error);
-    return null;
+    throw new Error('Error during affected package detection:', error);
   }
 }
 
@@ -80,7 +73,7 @@ export function filterFilesByPackages(
 }
 
 function getConfigFromEnv(): AffectedPackagesConfig {
-  const strategy = (process.env.AFFECTED_STRATEGY || 'git') as 'git' | 'moon' | 'disabled';
+  const strategy = (process.env.AFFECTED_STRATEGY || 'git') as 'git' | 'moon';
   const includeDownstream = process.env.AFFECTED_DOWNSTREAM !== 'false';
   const logging = process.env.AFFECTED_LOGGING !== 'false';
   const ignorePatterns = (process.env.AFFECTED_IGNORE || '')
