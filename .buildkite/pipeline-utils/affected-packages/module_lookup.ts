@@ -33,19 +33,19 @@ export function resetModuleLookupCache(): void {
  * The result is cached for the lifetime of the process (or until
  * `resetModuleLookupCache()` is called).
  */
-export function getModuleLookup(repoRoot?: string): ModuleLookup {
+export function getModuleLookup(): ModuleLookup {
   if (cachedModuleLookup) {
     return cachedModuleLookup;
   }
 
-  const root = repoRoot ?? getKibanaDir();
+  const root = getKibanaDir();
   const files = discoverKibanaJsoncFiles(root);
 
   const byDir = new Map<string, string>();
   const byId = new Map<string, string>();
 
   for (const file of files) {
-    if (file.includes('_fixtures_')) {
+    if (file.includes('__fixtures__')) {
       continue;
     }
     const dir = path.dirname(file);
@@ -68,8 +68,8 @@ export function getModuleLookup(repoRoot?: string): ModuleLookup {
 /**
  * Find the module that contains a given file path (longest-prefix match).
  */
-export function findModuleForPath(filePath: string, repoRoot?: string): string | undefined {
-  const lookup = getModuleLookup(repoRoot);
+export function findModuleForPath(filePath: string): string | undefined {
+  const lookup = getModuleLookup();
   const normalized = filePath.replace(/\\/g, '/');
 
   let longestPrefix = '';
@@ -88,8 +88,8 @@ export function findModuleForPath(filePath: string, repoRoot?: string): string |
 /**
  * Read tsconfig.json kbn_references for a module directory.
  */
-export function getModuleDependencies(moduleDir: string, repoRoot?: string): string[] {
-  const root = repoRoot ?? getKibanaDir();
+export function getModuleDependencies(moduleDir: string): string[] {
+  const root = getKibanaDir();
   const tsconfigPath = path.join(root, moduleDir, 'tsconfig.json');
 
   try {
@@ -108,9 +108,8 @@ export function getModuleDependencies(moduleDir: string, repoRoot?: string): str
 /**
  * Build a map where each module ID points to the set of modules that depend on it.
  */
-export function buildModuleDownstreamGraph(repoRoot?: string): Map<string, Set<string>> {
-  const root = repoRoot ?? getKibanaDir();
-  const lookup = getModuleLookup(root);
+export function buildModuleDownstreamGraph(): Map<string, Set<string>> {
+  const lookup = getModuleLookup();
   const downstreamMap = new Map<string, Set<string>>();
 
   for (const moduleId of lookup.byDir.values()) {
@@ -118,7 +117,7 @@ export function buildModuleDownstreamGraph(repoRoot?: string): Map<string, Set<s
   }
 
   for (const [moduleDir, moduleId] of lookup.byDir.entries()) {
-    const deps = getModuleDependencies(moduleDir, root);
+    const deps = getModuleDependencies(moduleDir);
     for (const depId of deps) {
       const downstreams = downstreamMap.get(depId);
       if (downstreams) {
