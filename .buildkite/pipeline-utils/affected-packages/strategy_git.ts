@@ -12,23 +12,17 @@ import { getKibanaDir } from '../utils';
 import { findModuleForPath, buildModuleDownstreamGraph } from './module_lookup';
 import { filterIgnoredFiles } from './utils';
 
+const isCI = !!process.env.CI?.match(/^(1|true)$/i);
+
 export function getAffectedModulesGit(
   mergeBase: string,
   includeDownstream: boolean,
-  ignorePatterns: string[] = []
+  ignorePatterns: string[] = [],
+  commit: string = 'HEAD'
 ): Set<string> {
-  const output = execSync(`git diff --name-only ${mergeBase} HEAD`, {
-    cwd: getKibanaDir(),
-    encoding: 'utf8',
-    maxBuffer: 10 * 1024 * 1024,
-  });
+  const allChangedFiles = listChangedFiles({ mergeBase, commit });
 
-  const allChanged = output
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  const changedFiles = filterIgnoredFiles(allChanged, ignorePatterns);
+  const changedFiles = filterIgnoredFiles(allChangedFiles, ignorePatterns);
 
   const directlyAffected = new Set<string>();
   for (const file of changedFiles) {
@@ -39,6 +33,31 @@ export function getAffectedModulesGit(
   }
 
   return includeDownstream ? getDownstreamDependents(directlyAffected) : directlyAffected;
+}
+
+function listChangedFiles({ mergeBase, commit }: { mergeBase: string; commit: string }): string[] {
+  const execOptions = {
+    cwd: getKibanaDir(),
+    encoding: 'utf8' as const,
+    maxBuffer: 10 * 1024 * 1024,
+  };
+  let fileListOutput: string;
+
+  if (isCI) {
+    fileListOutput = execSync(`git diff --name-only ${mergeBase} ${commit}`, execOptions);
+  } else {
+    // Committed + staged + unstaged changes to tracked files
+    const diffOutput = execSync(`git diff --name-only ${mergeBase}`, execOptions);
+    // Brand new untracked files
+    const untrackedOutput = execSync(`git ls-files --others --exclude-standard`, execOptions);
+
+    fileListOutput = `${diffOutput}\n${untrackedOutput}`;
+  }
+
+  return fileListOutput
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
 }
 
 function getDownstreamDependents(moduleIds: Set<string>): Set<string> {
