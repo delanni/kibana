@@ -25,7 +25,7 @@
  *   --help, -h     Show help
  *
  * Environment variables:
- *   AFFECTED_STRATEGY    - 'git' | 'moon' | 'disabled' (default: 'moon')
+ *   AFFECTED_STRATEGY    - 'git' | 'moon' | 'disabled' (default: 'git')
  *   AFFECTED_DOWNSTREAM  - 'true' | 'false' (default: 'false')
  *   GITHUB_PR_MERGE_BASE - merge base commit (default: 'origin/main')
  *
@@ -62,7 +62,7 @@ Options:
   --help, -h            Show this help message
 
 Environment variables:
-  AFFECTED_STRATEGY      Strategy (default: moon)
+  AFFECTED_STRATEGY      Strategy (default: git)
   AFFECTED_DOWNSTREAM    Include downstream: true | false (default: false)
   GITHUB_PR_MERGE_BASE   Merge base commit (default: origin/main)
 
@@ -94,7 +94,7 @@ async function main() {
     console.error(`Invalid strategy: ${flagStrategy}. Must be 'git' or 'moon'.`);
     process.exit(1);
   }
-  const strategy = flagStrategy || process.env.AFFECTED_STRATEGY || 'moon';
+  const strategy = flagStrategy || process.env.AFFECTED_STRATEGY || 'git';
 
   // Resolve downstream: flag > env > default
   const includeDownstream = args.includes('--deep')

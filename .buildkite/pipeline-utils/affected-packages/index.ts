@@ -7,9 +7,9 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-import { findPackageForPath } from './package_lookup';
-import { getAffectedPackagesGit } from './strategy_git';
-import { getAffectedPackagesMoon } from './strategy_moon';
+import { findModuleForPath } from './module_lookup';
+import { getAffectedModulesGit } from './strategy_git';
+import { getAffectedProjectsMoon } from './strategy_moon';
 
 /**
  * Configuration for affected package detection
@@ -35,7 +35,7 @@ export interface AffectedPackagesConfig {
  * Get configuration from environment variables
  *
  * Environment variables:
- * - AFFECTED_STRATEGY: 'git' | 'moon' | 'disabled' (default: 'moon')
+ * - AFFECTED_STRATEGY: 'git' | 'moon' | 'disabled' (default: 'git')
  * - AFFECTED_DOWNSTREAM: 'true' | 'false' (default: 'true')
  * - AFFECTED_LOGGING: 'true' | 'false' (default: 'true')
  *
@@ -44,7 +44,7 @@ export interface AffectedPackagesConfig {
 function getConfigFromEnv(): AffectedPackagesConfig {
   const strategy = (process.env.AFFECTED_STRATEGY ||
     process.env.JEST_AFFECTED_STRATEGY ||
-    'moon') as 'git' | 'moon' | 'disabled';
+    'git') as 'git' | 'moon' | 'disabled';
   const includeDownstream =
     (process.env.AFFECTED_DOWNSTREAM || process.env.JEST_AFFECTED_DOWNSTREAM) !== 'false';
   const logging = (process.env.AFFECTED_LOGGING || process.env.JEST_AFFECTED_LOGGING) !== 'false';
@@ -64,7 +64,7 @@ function getConfigFromEnv(): AffectedPackagesConfig {
  *                           Pass null to skip filtering and return all files
  * @returns Filtered array of file paths
  */
-export function filterFilesByAffectedPackages(
+export function filterFilesByPackages(
   files: string[],
   affectedPackages: Set<string> | null
 ): string[] {
@@ -81,11 +81,11 @@ export function filterFilesByAffectedPackages(
   const filtered: string[] = [];
 
   for (const filePath of files) {
-    const pkgId = findPackageForPath(filePath);
+    const moduleId = findModuleForPath(filePath);
 
-    if (pkgId && affectedPackages.has(pkgId)) {
+    if (moduleId && affectedPackages.has(moduleId)) {
       filtered.push(filePath);
-    } else if (!pkgId) {
+    } else if (!moduleId) {
       // File is not in a package (e.g., root-level) - include it to be safe
       filtered.push(filePath);
     }
@@ -126,8 +126,8 @@ export async function getAffectedPackages(
   try {
     const affectedPackages =
       config.strategy === 'git'
-        ? getAffectedPackagesGit(mergeBase, config.includeDownstream)
-        : getAffectedPackagesMoon(mergeBase, config.includeDownstream);
+        ? getAffectedModulesGit(mergeBase, config.includeDownstream)
+        : getAffectedProjectsMoon(mergeBase, config.includeDownstream);
 
     if (affectedPackages.size === 0) {
       log('Warning: No affected packages found');

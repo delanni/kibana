@@ -15,13 +15,13 @@ const REPO_ROOT = getKibanaDir();
 /**
  * Moon-based strategy: Use moon query to get affected projects
  */
-export function getAffectedPackagesMoon(
+export function getAffectedProjectsMoon(
   mergeBase: string,
   includeDownstream: boolean
 ): Set<string> {
   // Build the moon query command
   const downstreamFlag = includeDownstream ? '--downstream deep' : '';
-  const command = `moon query projects --affected ${downstreamFlag} --json`;
+  const command = `moon query projects --affected ${downstreamFlag}`;
 
   const output = execSync(command, {
     cwd: REPO_ROOT,
@@ -36,7 +36,6 @@ export function getAffectedPackagesMoon(
 
   const result = JSON.parse(output);
 
-  // Extract project IDs from the response
   const packageIds = new Set<string>();
   if (result.projects && Array.isArray(result.projects)) {
     for (const project of result.projects) {
@@ -45,6 +44,5 @@ export function getAffectedPackagesMoon(
       }
     }
   }
-
   return packageIds;
 }
