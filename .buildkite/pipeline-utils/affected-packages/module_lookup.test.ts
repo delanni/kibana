@@ -26,10 +26,7 @@ import {
   resetModuleLookupCache,
 } from './module_lookup';
 import { getAffectedModulesGit } from './strategy_git';
-
-// ---------------------------------------------------------------------------
-// Helpers for creating a fake repo in a temp directory
-// ---------------------------------------------------------------------------
+import { filterIgnoredFiles } from './utils';
 
 function git(cwd: string, command: string): string {
   return execSync(`git ${command}`, { cwd, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
@@ -95,18 +92,13 @@ function removeFile(root: string, relPath: string): void {
   fs.unlinkSync(path.join(root, relPath));
 }
 
-// ---------------------------------------------------------------------------
-// Test setup: 5-module dependency graph
-//
-//   @kbn/core  ←  @kbn/utils  ←  @kbn/my-plugin
-//                     ↑
-//   @kbn/logging ←  @kbn/analytics
-//
-// Downstream of @kbn/core:    utils, my-plugin
-// Downstream of @kbn/logging: analytics
-// Downstream of @kbn/utils:   my-plugin
-// ---------------------------------------------------------------------------
-
+/*
+ * Test dependency graph:
+ *
+ *   @kbn/core  ←  @kbn/utils  ←  @kbn/my-plugin
+ *                     ↑
+ *   @kbn/logging ←  @kbn/analytics
+ */
 const MODULES: ModuleSpec[] = [
   { relDir: 'packages/core', id: '@kbn/core', deps: [] },
   { relDir: 'packages/utils', id: '@kbn/utils', deps: ['@kbn/core'] },
@@ -118,6 +110,64 @@ const MODULES: ModuleSpec[] = [
     deps: ['@kbn/core', '@kbn/utils'],
   },
 ];
+
+describe('filterIgnoredFiles', () => {
+  const files = [
+    'src/index.ts',
+    'src/utils.ts',
+    'docs/README.md',
+    'docs/guide.md',
+    'config.yml',
+    '.github/workflows/ci.yml',
+  ];
+
+  it('returns all files when patterns is empty', () => {
+    expect(filterIgnoredFiles(files, [])).toEqual(files);
+  });
+
+  it('filters files matching a single pattern', () => {
+    expect(filterIgnoredFiles(files, ['**/*.md'])).toEqual([
+      'src/index.ts',
+      'src/utils.ts',
+      'config.yml',
+      '.github/workflows/ci.yml',
+    ]);
+  });
+
+  it('filters files matching multiple patterns', () => {
+    expect(filterIgnoredFiles(files, ['**/*.md', '**/*.yml'])).toEqual([
+      'src/index.ts',
+      'src/utils.ts',
+    ]);
+  });
+
+  it('supports directory-scoped patterns', () => {
+    expect(filterIgnoredFiles(files, ['docs/**'])).toEqual([
+      'src/index.ts',
+      'src/utils.ts',
+      'config.yml',
+      '.github/workflows/ci.yml',
+    ]);
+  });
+
+  it('matches dotfiles when dot: true', () => {
+    expect(filterIgnoredFiles(files, ['.github/**'])).toEqual([
+      'src/index.ts',
+      'src/utils.ts',
+      'docs/README.md',
+      'docs/guide.md',
+      'config.yml',
+    ]);
+  });
+
+  it('returns empty array when all files are filtered', () => {
+    expect(filterIgnoredFiles(files, ['**/*'])).toEqual([]);
+  });
+
+  it('returns all files when no patterns match', () => {
+    expect(filterIgnoredFiles(files, ['**/*.xyz'])).toEqual(files);
+  });
+});
 
 describe('module_lookup', () => {
   let tmpDir: string;
@@ -137,7 +187,6 @@ describe('module_lookup', () => {
       createModule(tmpDir, spec);
     }
 
-    // Non-module directory
     fs.mkdirSync(path.join(tmpDir, 'scripts'), { recursive: true });
     fs.writeFileSync(path.join(tmpDir, 'scripts', 'build.sh'), '#!/bin/bash\n');
 
@@ -148,10 +197,6 @@ describe('module_lookup', () => {
     resetModuleLookupCache();
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
-
-  // -----------------------------------------------------------------------
-  // getModuleLookup
-  // -----------------------------------------------------------------------
 
   describe('getModuleLookup', () => {
     it('discovers all modules via kibana.jsonc', () => {
@@ -215,10 +260,6 @@ describe('module_lookup', () => {
     });
   });
 
-  // -----------------------------------------------------------------------
-  // findModuleForPath
-  // -----------------------------------------------------------------------
-
   describe('findModuleForPath', () => {
     it('maps a deep file path to its containing module', () => {
       expect(findModuleForPath('packages/core/src/index.ts')).toBe('@kbn/core');
@@ -232,19 +273,15 @@ describe('module_lookup', () => {
       expect(findModuleForPath('packages/core/src/deep/file.ts')).toBe('@kbn/core');
     });
 
-    it('returns undefined for paths outside any module', () => {
-      expect(findModuleForPath('scripts/build.sh')).toBeUndefined();
-      expect(findModuleForPath('README.md')).toBeUndefined();
+    it('returns DEFAULT_KIBANA_MODULE_ID for paths outside any module', () => {
+      expect(findModuleForPath('scripts/build.sh')).toBe('kibana');
+      expect(findModuleForPath('README.md')).toBe('kibana');
     });
 
     it('handles backslash paths (Windows-style)', () => {
       expect(findModuleForPath('packages\\core\\src\\index.ts')).toBe('@kbn/core');
     });
   });
-
-  // -----------------------------------------------------------------------
-  // getModuleDependencies
-  // -----------------------------------------------------------------------
 
   describe('getModuleDependencies', () => {
     it('reads kbn_references from tsconfig.json', () => {
@@ -272,15 +309,10 @@ describe('module_lookup', () => {
     });
   });
 
-  // -----------------------------------------------------------------------
-  // buildModuleDownstreamGraph
-  // -----------------------------------------------------------------------
-
   describe('buildModuleDownstreamGraph', () => {
     it('builds correct downstream sets', () => {
       const graph = buildModuleDownstreamGraph();
 
-      // analytics depends on utils (not core directly), so it's not in core's direct downstream
       expect(graph.get('@kbn/core')).toEqual(new Set(['@kbn/utils', '@kbn/my-plugin']));
       expect(graph.get('@kbn/logging')).toEqual(new Set(['@kbn/analytics']));
       expect(graph.get('@kbn/utils')).toEqual(new Set(['@kbn/my-plugin', '@kbn/analytics']));
@@ -295,10 +327,6 @@ describe('module_lookup', () => {
       }
     });
   });
-
-  // -----------------------------------------------------------------------
-  // Affected detection with explicit file mutations
-  // -----------------------------------------------------------------------
 
   describe('getAffectedModulesGit – file mutations', () => {
     it('detects an added file in a single module', () => {
@@ -330,7 +358,6 @@ describe('module_lookup', () => {
       commitAll(tmpDir, 'modify core');
 
       const affected = getAffectedModulesGit(baseCommit, true);
-      // core → utils → my-plugin, analytics ; also core → my-plugin directly
       expect(affected).toEqual(
         new Set(['@kbn/core', '@kbn/utils', '@kbn/my-plugin', '@kbn/analytics'])
       );
@@ -341,7 +368,6 @@ describe('module_lookup', () => {
       commitAll(tmpDir, 'modify logging');
 
       const affected = getAffectedModulesGit(baseCommit, true);
-      // logging → analytics (analytics depends on logging)
       expect(affected).toEqual(new Set(['@kbn/logging', '@kbn/analytics']));
     });
 
@@ -354,18 +380,14 @@ describe('module_lookup', () => {
       expect(affected).toEqual(new Set(['@kbn/core', '@kbn/logging']));
     });
 
-    it('returns empty set when no module files changed', () => {
+    it('maps non-module files to the root kibana module', () => {
       modifyFile(tmpDir, 'scripts/build.sh', '#!/bin/bash\necho "v2"\n');
       commitAll(tmpDir, 'modify non-module file');
 
       const affected = getAffectedModulesGit(baseCommit, false);
-      expect(affected.size).toBe(0);
+      expect(affected).toEqual(new Set(['kibana']));
     });
   });
-
-  // -----------------------------------------------------------------------
-  // Random file mutations (stress test)
-  // -----------------------------------------------------------------------
 
   describe('getAffectedModulesGit – random mutations', () => {
     const ITERATIONS = 5;
@@ -395,7 +417,6 @@ describe('module_lookup', () => {
           }
         }
 
-        // Guarantee at least one mutation
         if (mutatedModules.size === 0) {
           addFileInModule(tmpDir, MODULES[0].relDir, `fallback_${i}.ts`);
           mutatedModules.add(MODULES[0].id);
@@ -416,10 +437,6 @@ describe('module_lookup', () => {
       });
     }
   });
-
-  // -----------------------------------------------------------------------
-  // Dynamic module addition/removal
-  // -----------------------------------------------------------------------
 
   describe('getAffectedModulesGit – dynamic module changes', () => {
     it('detects a newly added module', () => {
@@ -452,10 +469,6 @@ describe('module_lookup', () => {
     });
   });
 
-  // -----------------------------------------------------------------------
-  // Comparison base flexibility
-  // -----------------------------------------------------------------------
-
   describe('comparison base', () => {
     it('uses a specific commit as merge base', () => {
       modifyFile(tmpDir, 'packages/core/src/index.ts', 'export const v2 = true;\n');
@@ -484,11 +497,83 @@ describe('module_lookup', () => {
       expect(affectedLastCommit).toEqual(new Set(['@kbn/utils']));
     });
   });
-});
 
-// ---------------------------------------------------------------------------
-// Performance test against real repo (opt-in via env var)
-// ---------------------------------------------------------------------------
+  describe('getAffectedModulesGit – ignorePatterns', () => {
+    it('excludes files matching a single glob pattern', () => {
+      addFileInModule(tmpDir, 'packages/core', 'feature.ts');
+      fs.writeFileSync(path.join(tmpDir, 'packages', 'core', 'README.md'), '# Core\n');
+      addFileInModule(tmpDir, 'packages/utils', 'helper.ts');
+      commitAll(tmpDir, 'add files in core and utils');
+
+      const affected = getAffectedModulesGit(baseCommit, false, ['**/*.md']);
+      expect(affected).toEqual(new Set(['@kbn/core', '@kbn/utils']));
+    });
+
+    it('excludes an entire module when all its changed files are ignored', () => {
+      fs.writeFileSync(path.join(tmpDir, 'packages', 'core', 'README.md'), '# Core docs\n');
+      addFileInModule(tmpDir, 'packages/utils', 'helper.ts');
+      commitAll(tmpDir, 'add md to core and ts to utils');
+
+      const affected = getAffectedModulesGit(baseCommit, false, ['**/*.md']);
+      expect(affected).toEqual(new Set(['@kbn/utils']));
+    });
+
+    it('supports multiple ignore patterns', () => {
+      fs.writeFileSync(path.join(tmpDir, 'packages', 'core', 'README.md'), '# Core docs\n');
+      fs.writeFileSync(path.join(tmpDir, 'packages', 'utils', 'notes.txt'), 'notes\n');
+      addFileInModule(tmpDir, 'packages/logging', 'logger_v2.ts');
+      commitAll(tmpDir, 'add md, txt, and ts files');
+
+      const affected = getAffectedModulesGit(baseCommit, false, ['**/*.md', '**/*.txt']);
+      expect(affected).toEqual(new Set(['@kbn/logging']));
+    });
+
+    it('supports directory-scoped patterns', () => {
+      addFileInModule(tmpDir, 'packages/core', 'feature.ts');
+      addFileInModule(tmpDir, 'packages/utils', 'helper.ts');
+      commitAll(tmpDir, 'add ts files in core and utils');
+
+      const affected = getAffectedModulesGit(baseCommit, false, ['packages/core/**']);
+      expect(affected).toEqual(new Set(['@kbn/utils']));
+    });
+
+    it('returns empty set when all changed files are ignored', () => {
+      fs.writeFileSync(path.join(tmpDir, 'packages', 'core', 'README.md'), '# Core\n');
+      commitAll(tmpDir, 'docs only');
+
+      const affected = getAffectedModulesGit(baseCommit, false, ['**/*.md']);
+      expect(affected.size).toBe(0);
+    });
+
+    it('has no effect when patterns match nothing', () => {
+      addFileInModule(tmpDir, 'packages/core', 'feature.ts');
+      commitAll(tmpDir, 'add ts file');
+
+      const affected = getAffectedModulesGit(baseCommit, false, ['**/*.xyz']);
+      expect(affected).toEqual(new Set(['@kbn/core']));
+    });
+
+    it('empty ignorePatterns array has no effect', () => {
+      addFileInModule(tmpDir, 'packages/core', 'feature.ts');
+      commitAll(tmpDir, 'add ts file');
+
+      const withEmpty = getAffectedModulesGit(baseCommit, false, []);
+      const without = getAffectedModulesGit(baseCommit, false);
+      expect(withEmpty).toEqual(without);
+    });
+
+    it('works with downstream resolution after filtering', () => {
+      fs.writeFileSync(path.join(tmpDir, 'packages', 'core', 'README.md'), '# Core\n');
+      addFileInModule(tmpDir, 'packages/logging', 'logger_v2.ts');
+      commitAll(tmpDir, 'docs in core, ts in logging');
+
+      const affected = getAffectedModulesGit(baseCommit, true, ['**/*.md']);
+      expect(affected).toContain('@kbn/logging');
+      expect(affected).toContain('@kbn/analytics');
+      expect(affected).not.toContain('@kbn/core');
+    });
+  });
+});
 
 const PERF_ENABLED = process.env.RUN_PERF_TESTS === 'true';
 const describePerf = PERF_ENABLED ? describe : describe.skip;

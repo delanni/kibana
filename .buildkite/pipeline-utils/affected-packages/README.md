@@ -17,6 +17,7 @@ Each setting is resolved as **CLI flag > environment variable > default**.
 - `--json` - Output as JSON array (default: one package per line)
 - `--merge-base <commit>` - Git commit to compare against
 - `--strategy <git|moon>` - Strategy to use
+- `--ignore <glob>` - Exclude changed files matching glob from detection (repeatable)
 - `--help, -h` - Show help message
 
 | Setting    | CLI flag       | Env var                | Default        |
@@ -24,6 +25,7 @@ Each setting is resolved as **CLI flag > environment variable > default**.
 | Strategy   | `--strategy`   | `AFFECTED_STRATEGY`    | `git`          |
 | Downstream | `--deep`       | `AFFECTED_DOWNSTREAM`  | `false`        |
 | Merge base | `--merge-base` | `GITHUB_PR_MERGE_BASE` | `origin/main`  |
+| Ignore     | `--ignore`     | `AFFECTED_IGNORE`      | —              |
 
 **Examples:**
 
@@ -40,11 +42,14 @@ Each setting is resolved as **CLI flag > environment variable > default**.
 # Custom merge base
 .buildkite/pipeline-utils/affected-packages/list_affected --merge-base HEAD~10
 
+# Ignore documentation and config changes
+.buildkite/pipeline-utils/affected-packages/list_affected --ignore '**/*.md' --ignore '**/*.txt'
+
+# Ignore via environment (comma-separated)
+AFFECTED_IGNORE='**/*.md,docs/**' .buildkite/pipeline-utils/affected-packages/list_affected
+
 # Use Moon strategy instead
 .buildkite/pipeline-utils/affected-packages/list_affected --strategy moon --deep
-
-# Configure via environment
-AFFECTED_STRATEGY=moon AFFECTED_DOWNSTREAM=true .buildkite/pipeline-utils/affected-packages/list_affected
 ```
 
 ## Programmatic Usage
@@ -59,7 +64,8 @@ const affectedPackages = await getAffectedPackages(
   {
     strategy: 'git',       // default, can also be 'moon' or 'disabled'
     includeDownstream: true,
-    logging: false
+    logging: false,
+    ignorePatterns: ['**/*.md', 'docs/**']
   }
 );
 // Returns: Set<string> of module IDs (e.g. "@kbn/core", "@kbn/my-plugin")
@@ -98,15 +104,17 @@ const filteredFiles = filterFilesByPackages(
 | `AFFECTED_STRATEGY`    | `git`, `moon`, `disabled`       | `git`        | `git`                |
 | `AFFECTED_DOWNSTREAM`  | `true`, `false`                 | `false`      | `true`               |
 | `AFFECTED_LOGGING`     | `true`, `false`                 | `false`      | `true`               |
+| `AFFECTED_IGNORE`      | comma-separated globs           | —            | —                    |
 | `GITHUB_PR_MERGE_BASE` | any git ref                    | `origin/main`| —                    |
 
 ## How It Works
 
 ### Git Strategy (default)
 1. Get changed files via `git diff`
-2. Discover modules by scanning `kibana.jsonc` files across the repo
-3. Map changed files to modules (longest directory prefix match)
-4. Optionally traverse downstream dependency graph (from `tsconfig.json` `kbn_references`)
+2. Remove files matching any `--ignore` / `AFFECTED_IGNORE` glob patterns
+3. Discover modules by scanning `kibana.jsonc` files across the repo
+4. Map remaining changed files to modules (longest directory prefix match)
+5. Optionally traverse downstream dependency graph (from `tsconfig.json` `kbn_references`)
 
 **Performance**: ~500ms (first call, includes module discovery); subsequent calls use cache
 
@@ -114,4 +122,4 @@ const filteredFiles = filterFilesByPackages(
 1. Query Moon with `--affected [--downstream deep]`
 2. Return affected project IDs
 
-**Performance**: ~30-120 seconds
+**Performance**: ~5-7 seconds

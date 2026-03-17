@@ -11,96 +11,17 @@ import { findModuleForPath } from './module_lookup';
 import { getAffectedModulesGit } from './strategy_git';
 import { getAffectedProjectsMoon } from './strategy_moon';
 
-/**
- * Configuration for affected package detection
- */
 export interface AffectedPackagesConfig {
-  /**
-   * Strategy to use: 'git' | 'moon' | 'disabled'
-   */
   strategy: 'git' | 'moon' | 'disabled';
-
-  /**
-   * Include downstream dependencies
-   */
   includeDownstream: boolean;
-
-  /**
-   * Enable detailed logging
-   */
   logging: boolean;
+  /** Glob patterns for changed files to exclude before module resolution (git strategy only). */
+  ignorePatterns: string[];
 }
 
 /**
- * Get configuration from environment variables
- *
- * Environment variables:
- * - AFFECTED_STRATEGY: 'git' | 'moon' | 'disabled' (default: 'git')
- * - AFFECTED_DOWNSTREAM: 'true' | 'false' (default: 'true')
- * - AFFECTED_LOGGING: 'true' | 'false' (default: 'true')
- *
- * Note: Also supports legacy JEST_AFFECTED_* prefixed variables for backwards compatibility
- */
-function getConfigFromEnv(): AffectedPackagesConfig {
-  const strategy = (process.env.AFFECTED_STRATEGY ||
-    process.env.JEST_AFFECTED_STRATEGY ||
-    'git') as 'git' | 'moon' | 'disabled';
-  const includeDownstream =
-    (process.env.AFFECTED_DOWNSTREAM || process.env.JEST_AFFECTED_DOWNSTREAM) !== 'false';
-  const logging = (process.env.AFFECTED_LOGGING || process.env.JEST_AFFECTED_LOGGING) !== 'false';
-
-  return {
-    strategy,
-    includeDownstream,
-    logging,
-  };
-}
-
-/**
- * Filter file paths to only those in affected packages
- *
- * @param files - Array of file paths (relative to repo root)
- * @param affectedPackages - Set of affected package IDs
- *                           Pass null to skip filtering and return all files
- * @returns Filtered array of file paths
- */
-export function filterFilesByPackages(
-  files: string[],
-  affectedPackages: Set<string> | null
-): string[] {
-  // If null, return all files (filtering disabled/skipped)
-  if (affectedPackages === null) {
-    return files;
-  }
-
-  // If empty set, no packages affected - return empty array
-  if (affectedPackages.size === 0) {
-    return [];
-  }
-
-  const filtered: string[] = [];
-
-  for (const filePath of files) {
-    const moduleId = findModuleForPath(filePath);
-
-    if (moduleId && affectedPackages.has(moduleId)) {
-      filtered.push(filePath);
-    } else if (!moduleId) {
-      // File is not in a package (e.g., root-level) - include it to be safe
-      filtered.push(filePath);
-    }
-  }
-
-  return filtered;
-}
-
-/**
- * Get affected packages for filtering files
- * Returns null if filtering should be skipped (disabled, no merge base, critical files, etc.)
- * Returns empty Set if no affected packages found
- *
- * @param mergeBase - Git commit to compare against (e.g., GITHUB_PR_MERGE_BASE)
- * @returns Set of affected package IDs, or null to skip filtering
+ * Returns affected package IDs, or null when filtering should be skipped
+ * (strategy disabled, no merge base, or detection error).
  */
 export async function getAffectedPackages(
   mergeBase: string | undefined,
@@ -108,13 +29,11 @@ export async function getAffectedPackages(
 ): Promise<Set<string> | null> {
   const log = config.logging ? console.warn : () => {};
 
-  // Check if filtering is disabled
   if (config.strategy === 'disabled') {
     log('Affected package filtering is disabled');
     return null;
   }
 
-  // Check if we have a merge base
   if (!mergeBase) {
     log('No merge base found - skipping filtering');
     return null;
@@ -122,11 +41,10 @@ export async function getAffectedPackages(
 
   log('--- Detecting Affected Packages');
 
-  // Get affected packages
   try {
     const affectedPackages =
       config.strategy === 'git'
-        ? getAffectedModulesGit(mergeBase, config.includeDownstream)
+        ? getAffectedModulesGit(mergeBase, config.includeDownstream, config.ignorePatterns)
         : getAffectedProjectsMoon(mergeBase, config.includeDownstream);
 
     if (affectedPackages.size === 0) {
@@ -138,4 +56,37 @@ export async function getAffectedPackages(
     console.error('Error during affected package detection:', error);
     return null;
   }
+}
+
+/**
+ * Filter file paths to only those belonging to affected packages.
+ * Returns all files when `affectedPackages` is null (filtering disabled).
+ */
+export function filterFilesByPackages(
+  files: string[],
+  affectedPackages: Set<string> | null
+): string[] {
+  if (affectedPackages === null) {
+    return files;
+  }
+  if (affectedPackages.size === 0) {
+    return [];
+  }
+
+  return files.filter((filePath) => {
+    const moduleId = findModuleForPath(filePath);
+    return !moduleId || affectedPackages.has(moduleId);
+  });
+}
+
+function getConfigFromEnv(): AffectedPackagesConfig {
+  const strategy = (process.env.AFFECTED_STRATEGY || 'git') as 'git' | 'moon' | 'disabled';
+  const includeDownstream = process.env.AFFECTED_DOWNSTREAM !== 'false';
+  const logging = process.env.AFFECTED_LOGGING !== 'false';
+  const ignorePatterns = (process.env.AFFECTED_IGNORE || '')
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  return { strategy, includeDownstream, logging, ignorePatterns };
 }

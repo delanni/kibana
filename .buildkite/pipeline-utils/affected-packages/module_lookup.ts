@@ -14,6 +14,7 @@ import * as JSON5 from 'json5';
 import { getKibanaDir } from '../utils';
 
 export const DEFAULT_KIBANA_MODULE_ID = 'kibana';
+const IGNORED_DIRS = new Set(['node_modules', '.git', 'target', 'build', 'bazel-out']);
 
 export interface ModuleLookup {
   /** Relative module directory → module ID (e.g. `"src/core/packages/http/server-internal"` → `"@kbn/core-http-server-internal"`) */
@@ -28,13 +29,6 @@ export function resetModuleLookupCache(): void {
   cachedModuleLookup = null;
 }
 
-/**
- * Discover all Kibana modules by scanning for kibana.jsonc files.
- * Each module's `id` field becomes the lookup value.
- *
- * The result is cached for the lifetime of the process (or until
- * `resetModuleLookupCache()` is called).
- */
 export function getModuleLookup(): ModuleLookup {
   if (cachedModuleLookup) {
     return cachedModuleLookup;
@@ -67,9 +61,6 @@ export function getModuleLookup(): ModuleLookup {
   return cachedModuleLookup;
 }
 
-/**
- * Find the module that contains a given file path (longest-prefix match).
- */
 export function findModuleForPath(filePath: string): string | undefined {
   const lookup = getModuleLookup();
   const normalized = filePath.replace(/\\/g, '/');
@@ -87,9 +78,6 @@ export function findModuleForPath(filePath: string): string | undefined {
   return lookup.byDir.get(longestPrefix) || DEFAULT_KIBANA_MODULE_ID;
 }
 
-/**
- * Read tsconfig.json kbn_references for a module directory.
- */
 export function getModuleDependencies(moduleDir: string): string[] {
   const root = getKibanaDir();
   const tsconfigPath = path.join(root, moduleDir, 'tsconfig.json');
@@ -107,9 +95,6 @@ export function getModuleDependencies(moduleDir: string): string[] {
   return [];
 }
 
-/**
- * Build a map where each module ID points to the set of modules that depend on it.
- */
 export function buildModuleDownstreamGraph(): Map<string, Set<string>> {
   const lookup = getModuleLookup();
   const downstreamMap = new Map<string, Set<string>>();
@@ -147,8 +132,6 @@ function discoverKibanaJsoncFiles(root: string): string[] {
 
   return walkForKibanaJsonc(root);
 }
-
-const IGNORED_DIRS = new Set(['node_modules', '.git', 'target', 'build', 'bazel-out']);
 
 function walkForKibanaJsonc(root: string, relDir = ''): string[] {
   const results: string[] = [];

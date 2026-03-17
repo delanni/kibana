@@ -12,9 +12,6 @@ import { getKibanaDir } from '../utils';
 
 const REPO_ROOT = getKibanaDir();
 
-/**
- * Moon-based strategy: Use moon query to get affected projects
- */
 export function getAffectedProjectsMoon(
   mergeBase: string,
   includeDownstream: boolean
