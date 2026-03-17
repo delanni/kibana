@@ -13,6 +13,8 @@ import { execSync } from 'child_process';
 import * as JSON5 from 'json5';
 import { getKibanaDir } from '../utils';
 
+export const DEFAULT_KIBANA_MODULE_ID = 'kibana';
+
 export interface ModuleLookup {
   /** Relative module directory → module ID (e.g. `"src/core/packages/http/server-internal"` → `"@kbn/core-http-server-internal"`) */
   byDir: Map<string, string>;
@@ -82,7 +84,7 @@ export function findModuleForPath(filePath: string): string | undefined {
     }
   }
 
-  return lookup.byDir.get(longestPrefix);
+  return lookup.byDir.get(longestPrefix) || DEFAULT_KIBANA_MODULE_ID;
 }
 
 /**
