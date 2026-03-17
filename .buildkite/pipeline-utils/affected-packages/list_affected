@@ -30,7 +30,7 @@ Precedence: CLI flags > environment variables > defaults
 Options:
   --deep                Include downstream dependencies
   --json                Output as JSON array (default: one per line)
-  --merge-base <commit> Git commit to compare against
+  --merge-base <revision> Git revision to compare against
   --strategy <git|moon> Strategy to use
   --ignore <glob>       Exclude changed files matching glob (repeatable)
   --help, -h            Show this help message

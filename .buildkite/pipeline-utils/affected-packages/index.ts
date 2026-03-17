@@ -47,7 +47,9 @@ export async function getAffectedPackages(
 
     return affectedPackages;
   } catch (error) {
-    throw new Error('Error during affected package detection:', error);
+    throw new Error('Error during affected package detection', {
+      cause: error instanceof Error ? error : new Error(String(error)),
+    });
   }
 }
 
@@ -73,7 +75,11 @@ export function filterFilesByPackages(
 }
 
 function getConfigFromEnv(): AffectedPackagesConfig {
-  const strategy = (process.env.AFFECTED_STRATEGY || 'git') as 'git' | 'moon';
+  const rawStrategy = process.env.AFFECTED_STRATEGY ?? 'git';
+  if (rawStrategy !== 'git' && rawStrategy !== 'moon') {
+    throw new Error(`Invalid AFFECTED_STRATEGY: ${rawStrategy}`);
+  }
+  const strategy = rawStrategy;
   const includeDownstream = process.env.AFFECTED_DOWNSTREAM !== 'false';
   const logging = process.env.AFFECTED_LOGGING !== 'false';
   const ignorePatterns = (process.env.AFFECTED_IGNORE || '')

@@ -41,13 +41,16 @@ function listChangedFiles({ mergeBase, commit }: { mergeBase: string; commit: st
     encoding: 'utf8' as const,
     maxBuffer: 10 * 1024 * 1024,
   };
+
+  const actualBase = execSync(`git merge-base ${mergeBase} HEAD`, execOptions).trim();
+
   let fileListOutput: string;
 
   if (isCI) {
-    fileListOutput = execSync(`git diff --name-only ${mergeBase} ${commit}`, execOptions);
+    fileListOutput = execSync(`git diff --name-only ${actualBase} ${commit}`, execOptions);
   } else {
-    // Committed + staged + unstaged changes to tracked files
-    const diffOutput = execSync(`git diff --name-only ${mergeBase}`, execOptions);
+    // Committed + staged + unstaged changes to tracked files, excluding deletes
+    const diffOutput = execSync(`git diff --name-only --diff-filter=d ${actualBase}`, execOptions);
     // Brand new untracked files
     const untrackedOutput = execSync(`git ls-files --others --exclude-standard`, execOptions);
 

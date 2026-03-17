@@ -52,8 +52,14 @@ export function getModuleLookup(): ModuleLookup {
         byDir.set(dir, config.id);
         byId.set(config.id, dir);
       }
-    } catch {
-      // Skip unreadable/unparseable files
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        throw new Error(`Failed to load module config: ${file}`, {
+          cause: error instanceof Error ? error : new Error(String(error)),
+        });
+      } else {
+        throw error;
+      }
     }
   }
 
@@ -88,10 +94,15 @@ export function getModuleDependencies(moduleDir: string): string[] {
     if (Array.isArray(tsconfig?.kbn_references)) {
       return tsconfig.kbn_references.filter((ref: unknown) => typeof ref === 'string');
     }
-  } catch {
-    // No tsconfig or unparseable
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      throw new Error(`Failed to load module dependencies: ${moduleDir}/tsconfig.json`, {
+        cause: error instanceof Error ? error : new Error(String(error)),
+      });
+    } else {
+      throw error;
+    }
   }
-
   return [];
 }
 
