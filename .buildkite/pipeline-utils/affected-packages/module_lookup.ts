@@ -45,16 +45,11 @@ export function getModuleLookup(): ModuleLookup {
       continue;
     }
     const dir = path.dirname(file);
-    try {
-      const content = fs.readFileSync(path.join(root, file), 'utf8');
-      const config = JSON5.parse(content);
-      if (config.id && typeof config.id === 'string') {
-        byDir.set(dir, config.id);
-        byId.set(config.id, dir);
-      }
-    } catch (error) {
-      console.error(`Failed to load module config: ${file}`, error);
-      throw error;
+    const content = fs.readFileSync(path.join(root, file), 'utf8');
+    const config = JSON5.parse(content);
+    if (config.id && typeof config.id === 'string') {
+      byDir.set(dir, config.id);
+      byId.set(config.id, dir);
     }
   }
 
@@ -83,20 +78,10 @@ export function getModuleDependencies(moduleDir: string): string[] {
   const root = getKibanaDir();
   const tsconfigPath = path.join(root, moduleDir, 'tsconfig.json');
 
-  try {
-    const content = fs.readFileSync(tsconfigPath, 'utf8');
-    const tsconfig = JSON5.parse(content);
-    if (Array.isArray(tsconfig?.kbn_references)) {
-      return tsconfig.kbn_references.filter((ref: unknown) => typeof ref === 'string');
-    }
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-      throw new Error(`Failed to load module dependencies: ${moduleDir}/tsconfig.json`, {
-        cause: error instanceof Error ? error : new Error(String(error)),
-      });
-    } else {
-      throw error;
-    }
+  const content = fs.readFileSync(tsconfigPath, 'utf8');
+  const tsconfig = JSON5.parse(content);
+  if (Array.isArray(tsconfig?.kbn_references)) {
+    return tsconfig.kbn_references.filter((ref: unknown) => typeof ref === 'string');
   }
   return [];
 }
@@ -124,7 +109,7 @@ export function buildModuleDownstreamGraph(): Map<string, Set<string>> {
 
 function discoverKibanaJsoncFiles(root: string): string[] {
   try {
-    const output = execSync('git ls-files "*/kibana.jsonc" "kibana.jsonc"', {
+    const output = execSync('git ls-files "*/kibana.jsonc" "kibana.jsonc" --diff-filter=d', {
       cwd: root,
       encoding: 'utf8',
       maxBuffer: 10 * 1024 * 1024,
