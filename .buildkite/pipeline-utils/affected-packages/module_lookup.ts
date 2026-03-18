@@ -66,8 +66,11 @@ export function findModuleForPath(filePath: string): string | undefined {
 
   let longestPrefix = '';
   for (const moduleDir of lookup.byDir.keys()) {
-    const normalizedDir = moduleDir.replace(/\\/g, '/').replace(/\/$/, '') + '/'; // Trailing slash to prevent prefix matches
-    if (normalizedFilePath === normalizedDir || normalizedFilePath.startsWith(normalizedDir)) {
+    const normalizedDir = moduleDir.replace(/\\/g, '/').replace(/\/$/, '');
+    if (
+      normalizedFilePath === normalizedDir ||
+      normalizedFilePath.startsWith(normalizedDir + '/')
+    ) {
       if (moduleDir.length > longestPrefix.length) {
         longestPrefix = moduleDir;
       }
@@ -81,7 +84,12 @@ export function getModuleDependencies(moduleDir: string): string[] {
   const root = getKibanaDir();
   const tsconfigPath = path.join(root, moduleDir, 'tsconfig.json');
 
-  const content = fs.readFileSync(tsconfigPath, 'utf8');
+  let content: string;
+  try {
+    content = fs.readFileSync(tsconfigPath, 'utf8');
+  } catch {
+    return [];
+  }
   const tsconfig = JSON5.parse(content);
   if (Array.isArray(tsconfig?.kbn_references)) {
     return tsconfig.kbn_references.filter((ref: unknown) => typeof ref === 'string');

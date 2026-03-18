@@ -17,6 +17,7 @@ export interface AffectedPackagesConfig {
   logging: boolean;
   /** Glob patterns for changed files to exclude before module resolution (git strategy only). */
   ignorePatterns: string[];
+  ignoreUncategorizedChanges: boolean;
 }
 
 /**
@@ -34,7 +35,12 @@ export async function getAffectedPackages(
   try {
     const affectedPackages =
       config.strategy === 'git'
-        ? getAffectedModulesGit(mergeBase, config.includeDownstream, config.ignorePatterns)
+        ? getAffectedModulesGit({
+            mergeBase,
+            includeDownstream: config.includeDownstream,
+            ignorePatterns: config.ignorePatterns,
+            ignoreUncategorizedChanges: config.ignoreUncategorizedChanges,
+          })
         : getAffectedProjectsMoon(mergeBase, config.includeDownstream);
 
     if (affectedPackages.size === 0) {
@@ -82,5 +88,7 @@ function getConfigFromEnv(): AffectedPackagesConfig {
     .map((p) => p.trim())
     .filter(Boolean);
 
-  return { strategy, includeDownstream, logging, ignorePatterns };
+  const ignoreUncategorizedChanges = process.env.AFFECTED_IGNORE_UNCATEGORIZED_CHANGES !== 'false';
+
+  return { strategy, includeDownstream, logging, ignorePatterns, ignoreUncategorizedChanges };
 }

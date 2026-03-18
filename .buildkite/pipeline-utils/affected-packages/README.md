@@ -18,14 +18,16 @@ Each setting is resolved as **CLI flag > environment variable > default**.
 - `--merge-base <revision>` - Git revision to compare against
 - `--strategy <git|moon>` - Strategy to use
 - `--ignore <glob>` - Exclude changed files matching glob from detection (repeatable)
+- `--ignore-uncategorized` - (git) Exclude `[uncategorized]` from output when changes are only in files outside any module
 - `--help, -h` - Show help message
 
-| Setting    | CLI flag       | Env var                | Default        |
-|------------|----------------|------------------------|----------------|
-| Strategy   | `--strategy`   | `AFFECTED_STRATEGY`    | `git`          |
-| Downstream | `--deep`       | `AFFECTED_DOWNSTREAM`  | `false`        |
-| Merge base | `--merge-base` | `GITHUB_PR_MERGE_BASE` | `origin/main`  |
-| Ignore     | `--ignore`     | `AFFECTED_IGNORE`      | —              |
+| Setting           | CLI flag                 | Env var                             | Default        |
+|-------------------|--------------------------|-------------------------------------|----------------|
+| Strategy          | `--strategy`             | `AFFECTED_STRATEGY`                  | `git`          |
+| Downstream        | `--deep`                 | `AFFECTED_DOWNSTREAM`                | `false`        |
+| Merge base        | `--merge-base`           | `GITHUB_PR_MERGE_BASE`              | `origin/main`  |
+| Ignore            | `--ignore`               | `AFFECTED_IGNORE`                    | —              |
+| Ignore uncategorized | `--ignore-uncategorized` | `AFFECTED_IGNORE_UNCATEGORIZED_CHANGES` | `false`     |
 
 **Examples:**
 
@@ -48,6 +50,9 @@ Each setting is resolved as **CLI flag > environment variable > default**.
 # Ignore via environment (comma-separated)
 AFFECTED_IGNORE='**/*.md,docs/**' .buildkite/pipeline-utils/affected-packages/list_affected
 
+# Exclude [uncategorized] when only non-module files (scripts, root configs, etc.) changed
+.buildkite/pipeline-utils/affected-packages/list_affected --ignore-uncategorized
+
 # Use Moon strategy instead
 .buildkite/pipeline-utils/affected-packages/list_affected --strategy moon --deep
 ```
@@ -65,7 +70,8 @@ const affectedPackages = await getAffectedPackages(
     strategy: 'git',       // default, can also be 'moon'
     includeDownstream: true,
     logging: false,
-    ignorePatterns: ['**/*.md', 'docs/**']
+    ignorePatterns: ['**/*.md', 'docs/**'],
+    ignoreUncategorizedChanges: false,
   }
 );
 // Returns: Set<string> of module IDs (e.g. "@kbn/core", "@kbn/my-plugin")
@@ -99,13 +105,14 @@ const filteredFiles = filterFilesByPackages(
 
 ## Environment Variables
 
-| Variable               | Values                          | CLI default  | Programmatic default |
-|------------------------|---------------------------------|--------------|----------------------|
-| `AFFECTED_STRATEGY`    | `git`, `moon`                   | `git`        | `git`                |
-| `AFFECTED_DOWNSTREAM`  | `true`, `false`                 | `false`      | `true`               |
-| `AFFECTED_LOGGING`     | `true`, `false`                 | `false`      | `true`               |
-| `AFFECTED_IGNORE`      | comma-separated globs           | —            | —                    |
-| `GITHUB_PR_MERGE_BASE` | any git ref                     | `origin/main`| —                    |
+| Variable                           | Values                          | CLI default  | Programmatic default |
+|------------------------------------|---------------------------------|--------------|----------------------|
+| `AFFECTED_STRATEGY`                | `git`, `moon`                   | `git`        | `git`                |
+| `AFFECTED_DOWNSTREAM`              | `true`, `false`                 | `false`      | `true`               |
+| `AFFECTED_LOGGING`                 | `true`, `false`                 | `false`      | `true`               |
+| `AFFECTED_IGNORE`                  | comma-separated globs           | —            | —                    |
+| `AFFECTED_IGNORE_UNCATEGORIZED_CHANGES` | `true`, `false`            | `false`      | `false`              |
+| `GITHUB_PR_MERGE_BASE`             | any git ref                     | `origin/main`| —                    |
 
 ## How It Works
 
@@ -113,8 +120,9 @@ const filteredFiles = filterFilesByPackages(
 1. Get changed files via `git diff`
 2. Remove files matching any `--ignore` / `AFFECTED_IGNORE` glob patterns
 3. Discover modules by scanning `kibana.jsonc` files across the repo
-4. Map remaining changed files to modules (longest directory prefix match)
-5. Optionally traverse downstream dependency graph (from `tsconfig.json` `kbn_references`)
+4. Map remaining changed files to modules (longest directory prefix match); files outside any module map to `[uncategorized]`
+5. If `--ignore-uncategorized` / `AFFECTED_IGNORE_UNCATEGORIZED_CHANGES` is set, remove `[uncategorized]` from the result
+6. Optionally traverse downstream dependency graph (from `tsconfig.json` `kbn_references`)
 
 **Performance**: ~500ms (first call, includes module discovery); subsequent calls use cache
 

@@ -28,17 +28,19 @@ Usage: list_affected [options]
 Precedence: CLI flags > environment variables > defaults
 
 Options:
-  --deep                Include downstream dependencies
-  --json                Output as JSON array (default: one per line)
+  --deep                  Include downstream dependencies
+  --json                  Output as JSON array (default: one per line)
   --merge-base <revision> Git revision to compare against
-  --strategy <git|moon> Strategy to use
-  --ignore <glob>       Exclude changed files matching glob (repeatable)
-  --help, -h            Show this help message
+  --strategy <git|moon>   Strategy to use
+  --ignore <glob>         (git) Exclude changed files matching glob (repeatable)
+  --ignore-uncategorized  (git) Ignore changes that are not categorized into a module (default: false)
+  --help, -h              Show this help message
 
 Environment variables:
   AFFECTED_STRATEGY      Strategy (default: git)
   AFFECTED_DOWNSTREAM    Include downstream: true | false (default: false)
   AFFECTED_IGNORE        Comma-separated glob patterns to exclude
+  AFFECTED_IGNORE_UNCATEGORIZED_CHANGES Ignore changes that are not categorized into a module (default: false)
   GITHUB_PR_MERGE_BASE   Merge base commit (default: origin/main)
 
 Examples:
@@ -51,7 +53,7 @@ Examples:
 
 async function main() {
   const argv = parseArgs(process.argv.slice(2), {
-    boolean: ['deep', 'json', 'help'],
+    boolean: ['deep', 'json', 'help', 'ignore-uncategorized'],
     string: ['merge-base', 'strategy', 'ignore'],
     alias: { h: 'help' },
   });
@@ -76,6 +78,8 @@ async function main() {
     .map((p) => p.trim())
     .filter(Boolean);
   const ignorePatterns = flagIgnore.length > 0 ? flagIgnore : envIgnore;
+  const ignoreUncategorizedChanges =
+    argv['ignore-uncategorized'] || process.env.AFFECTED_IGNORE_UNCATEGORIZED_CHANGES !== 'false';
 
   try {
     const affectedPackages = await getAffectedPackages(mergeBase, {
@@ -83,6 +87,7 @@ async function main() {
       includeDownstream,
       logging: false,
       ignorePatterns,
+      ignoreUncategorizedChanges,
     });
 
     const packageList = Array.from(affectedPackages || []).sort();

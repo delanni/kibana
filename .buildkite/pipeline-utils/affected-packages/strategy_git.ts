@@ -9,17 +9,28 @@
 
 import { execSync } from 'child_process';
 import { getKibanaDir } from '../utils';
-import { findModuleForPath, buildModuleDownstreamGraph } from './module_lookup';
+import {
+  findModuleForPath,
+  buildModuleDownstreamGraph,
+  UNCATEGORIZED_MODULE_ID,
+} from './module_lookup';
 import { filterIgnoredFiles } from './utils';
 
 const isCI = !!process.env.CI?.match(/^(1|true)$/i);
 
-export function getAffectedModulesGit(
-  mergeBase: string,
-  includeDownstream: boolean,
-  ignorePatterns: string[] = [],
-  commit: string = 'HEAD'
-): Set<string> {
+export function getAffectedModulesGit({
+  mergeBase,
+  includeDownstream,
+  ignorePatterns = [],
+  commit = 'HEAD',
+  ignoreUncategorizedChanges = false,
+}: {
+  mergeBase: string;
+  includeDownstream: boolean;
+  ignorePatterns?: string[];
+  commit?: string;
+  ignoreUncategorizedChanges?: boolean;
+}): Set<string> {
   const allChangedFiles = listChangedFiles({ mergeBase, commit });
 
   const changedFiles = filterIgnoredFiles(allChangedFiles, ignorePatterns);
@@ -30,6 +41,10 @@ export function getAffectedModulesGit(
     if (moduleId) {
       directlyAffected.add(moduleId);
     }
+  }
+
+  if (ignoreUncategorizedChanges) {
+    directlyAffected.delete(UNCATEGORIZED_MODULE_ID);
   }
 
   return includeDownstream ? getDownstreamDependents(directlyAffected) : directlyAffected;
