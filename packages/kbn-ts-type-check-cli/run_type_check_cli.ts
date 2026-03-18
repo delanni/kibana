@@ -22,6 +22,7 @@ import { restoreTSBuildArtifacts } from './src/archive/restore_ts_build_artifact
 import { LOCAL_CACHE_ROOT } from './src/archive/constants';
 import { isCiEnvironment } from './src/archive/utils';
 import { normalizeProjectPath } from './src/normalize_project_path';
+import { ToolingLog } from '@kbn/tooling-log';
 
 const rel = (from: string, to: string) => {
   const path = Path.relative(from, to);
@@ -88,12 +89,20 @@ async function createTypeCheckConfigs(
   );
 }
 
-async function detectLocalChanges(): Promise<boolean> {
+async function detectLocalChanges(log: ToolingLog): Promise<boolean> {
   const { stdout } = await execa('git', ['status', '--porcelain'], {
     cwd: REPO_ROOT,
   });
 
-  return stdout.trim().length > 0;
+  if (stdout.trim().length > 0) {
+    log.warning(
+      "Uncommitted changes detected after TypeScript build. Output from 'git status --porcelain':"
+    );
+    log.warning(stdout);
+    return true;
+  } else {
+    return false;
+  }
 }
 
 run(
@@ -172,7 +181,7 @@ run(
       didTypeCheckFail = true;
     }
 
-    const hasLocalChanges = shouldUseArchive ? await detectLocalChanges() : false;
+    const hasLocalChanges = shouldUseArchive ? await detectLocalChanges(log) : false;
 
     if (shouldUseArchive) {
       if (hasLocalChanges) {
