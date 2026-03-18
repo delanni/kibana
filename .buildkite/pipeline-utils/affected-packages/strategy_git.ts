@@ -50,7 +50,7 @@ function listChangedFiles({ mergeBase, commit }: { mergeBase: string; commit: st
     fileListOutput = execSync(`git diff --name-only ${actualBase} ${commit}`, execOptions);
   } else {
     // Committed + staged + unstaged changes to tracked files, excluding deletes
-    const diffOutput = execSync(`git diff --name-only --diff-filter=d ${actualBase}`, execOptions);
+    const diffOutput = execSync(`git diff --name-only ${actualBase}`, execOptions);
     // Brand new untracked files
     const untrackedOutput = execSync(`git ls-files --others --exclude-standard`, execOptions);
 

@@ -47,9 +47,8 @@ export async function getAffectedPackages(
 
     return affectedPackages;
   } catch (error) {
-    throw new Error('Error during affected package detection', {
-      cause: error instanceof Error ? error : new Error(String(error)),
-    });
+    console.error('Error during affected package detection', error);
+    throw error;
   }
 }
 

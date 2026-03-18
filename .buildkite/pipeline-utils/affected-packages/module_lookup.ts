@@ -13,7 +13,7 @@ import { execSync } from 'child_process';
 import * as JSON5 from 'json5';
 import { getKibanaDir } from '../utils';
 
-export const DEFAULT_KIBANA_MODULE_ID = 'kibana';
+export const DEFAULT_KIBANA_MODULE_ID = '[uncategorized]';
 const IGNORED_DIRS = new Set(['node_modules', '.git', 'target', 'build', 'bazel-out']);
 
 export interface ModuleLookup {
@@ -53,13 +53,8 @@ export function getModuleLookup(): ModuleLookup {
         byId.set(config.id, dir);
       }
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-        throw new Error(`Failed to load module config: ${file}`, {
-          cause: error instanceof Error ? error : new Error(String(error)),
-        });
-      } else {
-        throw error;
-      }
+      console.error(`Failed to load module config: ${file}`, error);
+      throw error;
     }
   }
 
