@@ -26,10 +26,10 @@ import { serverless, stateful } from '../../ftr_configs_manifests.json';
 import { filterEmptyJestConfigs } from './get_tests_from_config';
 import {
   getAffectedPackages,
-  filterFilesByAffectedPackages,
-  touchedCriticalFiles,
+  filterFilesByPackages,
   NO_SELECTIVE_TESTS_LABEL,
   CRITICAL_FILES_JEST_UNIT_TESTS,
+  touchedCriticalFiles,
 } from '../affected-packages';
 import { collectEnvFromLabels, expandAgentQueue, getRequiredEnv } from '#pipeline-utils';
 
@@ -233,22 +233,26 @@ export async function pickTestGroupRunOrder() {
   const affectedPackages = await getAffectedPackages(process.env.GITHUB_PR_MERGE_BASE, {
     strategy: 'git',
     includeDownstream: true,
-    logging: false,
+    ignorePatterns: [], // might want to exclude metadata/text changes in the future
+    ignoreUncategorizedChanges: true,
+  }).catch((error) => {
+    console.error('Error getting affected packages', error);
+    return null;
   });
 
+  const shouldFilterByAffected =
+    affectedPackages && affectedPackages.size > 0 && !NO_SELECTIVE_TESTS;
+
   const filteredJestUnitConfigs =
-    !NO_SELECTIVE_TESTS &&
-    affectedPackages &&
-    !touchedCriticalFiles(jestUnitConfigs, CRITICAL_FILES_JEST_UNIT_TESTS)
-      ? filterFilesByAffectedPackages(jestUnitConfigs, affectedPackages)
+    shouldFilterByAffected && !touchedCriticalFiles(jestUnitConfigs, CRITICAL_FILES_JEST_UNIT_TESTS)
+      ? filterFilesByPackages(jestUnitConfigs, affectedPackages)
       : jestUnitConfigs;
   console.warn(
     `Filtering Jest unit tests for affected packages: ${jestUnitConfigs.length} -> ${filteredJestUnitConfigs.length}`
   );
-  const filteredJestIntegrationConfigs =
-    !NO_SELECTIVE_TESTS && affectedPackages
-      ? filterFilesByAffectedPackages(jestIntegrationConfigs, affectedPackages)
-      : jestIntegrationConfigs;
+  const filteredJestIntegrationConfigs = shouldFilterByAffected
+    ? filterFilesByPackages(jestIntegrationConfigs, affectedPackages)
+    : jestIntegrationConfigs;
   console.warn(
     `Filtering Jest integration tests for affected packages: ${jestIntegrationConfigs.length} -> ${filteredJestIntegrationConfigs.length}`
   );

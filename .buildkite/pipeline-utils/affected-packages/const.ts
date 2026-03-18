@@ -7,14 +7,26 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
+export const UNCATEGORIZED_MODULE_ID = '[uncategorized]';
+
+export const NO_SELECTIVE_TESTS_LABEL = 'ci:no-selective-tests';
+
+// TODO: find reasonable set of critical files for unit tests
 export const CRITICAL_FILES_JEST_UNIT_TESTS = [
   'scripts/jest.js',
   'scripts/jest_all.js',
   'package.json',
   'yarn.lock',
   'tsconfig.json',
-  '.moon/workspace.yml',
   'src/platform/packages/shared/kbn-test/**/*',
 ];
 
-export const NO_SELECTIVE_TESTS_LABEL = 'ci:no-selective-tests';
+// TODO: find reasonable set of critical files for integration tests
+export const CRITICAL_FILES_JEST_INTEGRATION_TESTS = [
+  'scripts/jest_integration.js',
+  'scripts/jest_all.js',
+  'package.json',
+  'yarn.lock',
+  'tsconfig.json',
+  'src/platform/packages/shared/kbn-test/**/*',
+];
