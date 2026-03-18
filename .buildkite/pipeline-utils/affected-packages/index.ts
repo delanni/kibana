@@ -27,13 +27,9 @@ export async function getAffectedPackages(
   mergeBase: string | undefined,
   config: AffectedPackagesConfig = getConfigFromEnv()
 ): Promise<Set<string>> {
-  const log = config.logging ? console.warn : () => {};
-
   if (!mergeBase) {
     throw new Error('No merge base found');
   }
-
-  log('--- Detecting Affected Packages');
 
   try {
     const affectedPackages =
@@ -42,7 +38,7 @@ export async function getAffectedPackages(
         : getAffectedProjectsMoon(mergeBase, config.includeDownstream);
 
     if (affectedPackages.size === 0) {
-      log('Warning: No affected packages found');
+      console.warn('Warning: No affected packages found');
     }
 
     return affectedPackages;

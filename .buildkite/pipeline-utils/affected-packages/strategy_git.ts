@@ -42,6 +42,7 @@ function listChangedFiles({ mergeBase, commit }: { mergeBase: string; commit: st
     maxBuffer: 10 * 1024 * 1024,
   };
 
+  // To avoid symmetric diffs, and only care for changes from local towards the merge base
   const actualBase = execSync(`git merge-base ${mergeBase} HEAD`, execOptions).trim();
 
   let fileListOutput: string;

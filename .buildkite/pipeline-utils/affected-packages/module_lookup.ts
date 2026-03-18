@@ -13,13 +13,16 @@ import { execSync } from 'child_process';
 import * as JSON5 from 'json5';
 import { getKibanaDir } from '../utils';
 
-export const DEFAULT_KIBANA_MODULE_ID = '[uncategorized]';
-const IGNORED_DIRS = new Set(['node_modules', '.git', 'target', 'build', 'bazel-out']);
+export const UNCATEGORIZED_MODULE_ID = '[uncategorized]';
 
 export interface ModuleLookup {
-  /** Relative module directory → module ID (e.g. `"src/core/packages/http/server-internal"` → `"@kbn/core-http-server-internal"`) */
+  /**
+   * `"src/core/packages/http/server-internal"` → `"@kbn/core-http-server-internal"`
+   */
   byDir: Map<string, string>;
-  /** Module ID → relative module directory (reverse of byDir) */
+  /**
+   * `"@kbn/core-http-server-internal"` → `"src/core/packages/http/server-internal"`
+   */
   byId: Map<string, string>;
 }
 
@@ -59,19 +62,19 @@ export function getModuleLookup(): ModuleLookup {
 
 export function findModuleForPath(filePath: string): string | undefined {
   const lookup = getModuleLookup();
-  const normalized = filePath.replace(/\\/g, '/');
+  const normalizedFilePath = filePath.replace(/\\/g, '/');
 
   let longestPrefix = '';
   for (const moduleDir of lookup.byDir.keys()) {
-    const normalizedDir = moduleDir.replace(/\\/g, '/').replace(/\/$/, '');
-    if (normalized === normalizedDir || normalized.startsWith(`${normalizedDir}/`)) {
+    const normalizedDir = moduleDir.replace(/\\/g, '/').replace(/\/$/, '') + '/'; // Trailing slash to prevent prefix matches
+    if (normalizedFilePath === normalizedDir || normalizedFilePath.startsWith(normalizedDir)) {
       if (moduleDir.length > longestPrefix.length) {
         longestPrefix = moduleDir;
       }
     }
   }
 
-  return lookup.byDir.get(longestPrefix) || DEFAULT_KIBANA_MODULE_ID;
+  return lookup.byDir.get(longestPrefix) || UNCATEGORIZED_MODULE_ID;
 }
 
 export function getModuleDependencies(moduleDir: string): string[] {
@@ -124,6 +127,14 @@ function discoverKibanaJsoncFiles(root: string): string[] {
   return walkForKibanaJsonc(root);
 }
 
+const IGNORED_DIRS = new Set([
+  'node_modules',
+  '.git',
+  'target',
+  'build',
+  'bazel-out',
+  '__fixtures__',
+]);
 function walkForKibanaJsonc(root: string, relDir = ''): string[] {
   const results: string[] = [];
   const absDir = relDir ? path.join(root, relDir) : root;

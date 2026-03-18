@@ -15,7 +15,7 @@ Each setting is resolved as **CLI flag > environment variable > default**.
 **Options:**
 - `--deep` - Include downstream dependencies
 - `--json` - Output as JSON array (default: one package per line)
-- `--merge-base <commit>` - Git commit to compare against
+- `--merge-base <revision>` - Git revision to compare against
 - `--strategy <git|moon>` - Strategy to use
 - `--ignore <glob>` - Exclude changed files matching glob from detection (repeatable)
 - `--help, -h` - Show help message

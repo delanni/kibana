@@ -16,19 +16,19 @@ export function getAffectedProjectsMoon(
   mergeBase: string,
   includeDownstream: boolean
 ): Set<string> {
-  // Build the moon query command
   const downstreamFlag = includeDownstream ? '--downstream deep' : '';
   const command = `moon query projects --affected ${downstreamFlag}`;
 
   const output = execSync(command, {
     cwd: REPO_ROOT,
     encoding: 'utf8',
-    maxBuffer: 50 * 1024 * 1024, // 50MB buffer
+    maxBuffer: 10 * 1024 * 1024, // 10MB buffer
     env: {
       ...process.env,
       MOON_BASE: mergeBase,
+      MOON_NO_ACTIONS: 'true',
     },
-    timeout: 120000, // 2 minutes (moon can be slow)
+    timeout: 30000, // 30 seconds
   });
 
   const result = JSON.parse(output);
