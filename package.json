@@ -36,7 +36,7 @@
       ]
     }
   },
-  "_dummy": "dummy",
+  "_dummy": "dummy 2x2",
   "author": "Rashid Khan <rashid.khan@elastic.co>",
   "scripts": {
     "backport-skip-ci": "backport --prDescription \"[skip-ci]\"",
