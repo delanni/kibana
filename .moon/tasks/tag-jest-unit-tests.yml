@@ -11,9 +11,13 @@ tasks:
       - scripts/jest.js
       - '--runInBand'
       - '--passWithNoTests'
+      - '--config'
+      - '@files(jest-config)'
     deps:
       - '~:source'
       - '~:source-upstream'
+    inputs:
+      - '@group(src)'
     options:
       mergeArgs: append
       runFromWorkspaceRoot: true
