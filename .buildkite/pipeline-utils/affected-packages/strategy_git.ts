@@ -9,11 +9,8 @@
 
 import { execSync } from 'child_process';
 import { getKibanaDir } from '../utils';
-import {
-  findModuleForPath,
-  buildModuleDownstreamGraph,
-  UNCATEGORIZED_MODULE_ID,
-} from './module_lookup';
+import { findModuleForPath, buildModuleDownstreamGraph } from './module_lookup';
+import { UNCATEGORIZED_MODULE_ID } from './const';
 import { filterIgnoredFiles } from './utils';
 
 const isCI = !!process.env.CI?.match(/^(1|true)$/i);
