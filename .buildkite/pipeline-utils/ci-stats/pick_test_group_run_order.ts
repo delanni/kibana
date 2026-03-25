@@ -245,21 +245,24 @@ export async function pickTestGroupRunOrder() {
     return null;
   });
 
-  const shouldFilterByAffected =
-    USE_SELECTIVE_TESTING && affectedPackages && affectedPackages.size > 0;
+  const shouldFilterByAffected = USE_SELECTIVE_TESTING && affectedPackages;
+
+  if (USE_SELECTIVE_TESTING) {
+    console.warn('Filtering Jest unit/integration tests for affected packages:', affectedPackages);
+  }
 
   const filteredJestUnitConfigs =
     shouldFilterByAffected && !touchedCriticalFiles(jestUnitConfigs, CRITICAL_FILES_JEST_UNIT_TESTS)
       ? filterFilesByPackages(jestUnitConfigs, affectedPackages)
       : jestUnitConfigs;
   console.warn(
-    `Filtering Jest unit tests for affected packages: ${jestUnitConfigs.length} -> ${filteredJestUnitConfigs.length}`
+    `Filtering Jest unit tests: ${jestUnitConfigs.length} -> ${filteredJestUnitConfigs.length}`
   );
   const filteredJestIntegrationConfigs = shouldFilterByAffected
     ? filterFilesByPackages(jestIntegrationConfigs, affectedPackages)
     : jestIntegrationConfigs;
   console.warn(
-    `Filtering Jest integration tests for affected packages: ${jestIntegrationConfigs.length} -> ${filteredJestIntegrationConfigs.length}`
+    `Filtering Jest integration tests: ${jestIntegrationConfigs.length} -> ${filteredJestIntegrationConfigs.length}`
   );
 
   if (
