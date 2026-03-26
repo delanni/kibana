@@ -108,12 +108,17 @@ export const command = {
         }
         await yarnInstallDeps(log, { offline, quiet });
       }
+      await moonRun([':extract-version-dependencies'], {
+        pipe: !quiet,
+        quiet,
+        noCache: forceInstall,
+      });
     });
 
     await Promise.all([
       time('prepare webpack bundles for packages', async () => {
         log.info('extract relevant versions for packages and pre-build webpack bundles');
-        await moonRun([':extract-version-dependencies', ':build-webpack'], {
+        await moonRun([':build-webpack'], {
           pipe: !quiet,
           quiet,
           noCache: forceInstall,
