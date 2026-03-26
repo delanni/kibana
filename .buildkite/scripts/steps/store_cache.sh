@@ -4,7 +4,9 @@ set -euo pipefail
 
 source .buildkite/scripts/common/util.sh
 
-du -h .moon/cache
+if [[ -d .moon/cache ]]; then
+  du -h .moon/cache
+fi
 
 echo "--- Clear moon cache"
 rm -rf .moon/cache
@@ -18,6 +20,9 @@ if [[ ! -d .moon/cache ]]; then
   exit 0
 else
   du -h .moon/cache
+  du -h .moon/cache/outputs
+
+  node .buildkite/scripts/steps/processMoonCache.cjs .moon/cache || echo "Failed to process moon cache"
 
   echo "--- Archive moon cache"
   tar -czf ~/moon-cache.tar.gz .moon/cache || echo "Failed to archive moon cache"
