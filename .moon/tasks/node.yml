@@ -8,3 +8,56 @@ fileGroups:
   default:
     - '**/*'
   production: [ ]
+
+tasks:
+  source:
+    script: "echo source-check at $MOON_PROJECT_ID@$MOON_TASK_HASH"
+    inputs:
+      - "@group(src)"
+    options:
+      runFromWorkspaceRoot: true
+
+  source-upstream-direct:
+    script: "echo source-upstream-direct-check at $MOON_PROJECT_ID@$MOON_TASK_HASH"
+    inputs:
+      - "@group(src)"
+    deps:
+      - ^:source
+    options:
+      runFromWorkspaceRoot: true
+
+  eslint:
+    command: node
+    args:
+      - scripts/eslint.js
+      - '$projectSource'
+      - '--no-error-on-unmatched-pattern'
+    options:
+      runFromWorkspaceRoot: true
+      cache: true
+    deps:
+      - '@kbn/eslint-config:source-upstream-direct'
+    inputs:
+      - '**/*.{js,mjs,ts,tsx}'
+      - '**/.eslintrc.*'
+      - '/.eslintignore'
+      - '/.eslintrc.*'
+
+  eslint-fix:
+    command: node
+    args:
+      - scripts/eslint.js
+      - '$projectSource'
+      - '--no-error-on-unmatched-pattern'
+      - '--fix'
+      - '--break-on-fix' # This is to prevent unwanted caching
+    options:
+      runFromWorkspaceRoot: true
+      cache: true 
+    deps:
+      - '@kbn/eslint-config:source-upstream-direct'
+    inputs:
+      - '**/*.{js,mjs,ts,tsx}'
+      - '**/.eslintrc.*'
+      - '/.eslintignore'
+      - '/.eslintrc.*'

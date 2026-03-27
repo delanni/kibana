@@ -251,10 +251,19 @@ EOF
   fi
 }
 
-# Inject moon remote-cache credentials on CI
+# Moon takes a long while to warm up before starting to execute anything.
+# We disable Moon actions here to avoid that overhead; if we want to use Moon for
+# setup/sync actions in the future, we will need to remove or conditionally set this variable.
+export MOON_NO_ACTIONS=true
+
 if [[ "${CI:-}" =~ ^(1|true)$ ]]; then
+  # Inject moon remote-cache credentials on CI
   MOON_REMOTE_CACHE_TOKEN=$(vault_get moon-remote-cache token)
   export MOON_REMOTE_CACHE_TOKEN
+
+  # Set moon's remote targeting for affected calculations
+  MOON_BASE=${BUILDKITE_PULL_REQUEST_BASE_BRANCH:-main}
+  export MOON_BASE
 fi
 
 PIPELINE_PRE_COMMAND=${PIPELINE_PRE_COMMAND:-".buildkite/scripts/lifecycle/pipelines/$BUILDKITE_PIPELINE_SLUG/pre_command.sh"}

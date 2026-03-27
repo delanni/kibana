@@ -35,10 +35,10 @@ function parseArgv(argv) {
     const [name, ...value] = arg.slice(2).split('=');
     if (value.length === 0) {
       // boolean flag
+      flags.set(name, true);
+
       if (name.startsWith('no-')) {
         flags.set(name.slice(3), false);
-      } else {
-        flags.set(name, true);
       }
     } else {
       flags.set(name, value.join('='));
