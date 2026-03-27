@@ -264,10 +264,11 @@ for (const testSuite of testSuites) {
         );
       }
       const agentQueue = suiteName.includes('defend_workflows') ? 'n2-4-virt' : 'n2-4-spot';
-      const diskSizeOverride = {
-        'osquery_cypress': 115,
-        'security_serverless_osquery': 115,
-      }[suiteName] || 105;
+      const diskSizeOverride =
+        {
+          osquery_cypress: 115,
+          security_serverless_osquery: 115,
+        }[suiteName] || 105;
 
       steps.push({
         command: `.buildkite/scripts/steps/functional/${suiteName}.sh`,
