@@ -19,6 +19,7 @@ steps:
       imageProject: elastic-images-prod
       provider: gcp
       machineType: n2-standard-8
+      diskSizeGb: 115
       preemptible: true
     key: build
     if: "build.env('KIBANA_BUILD_ID') == null || build.env('KIBANA_BUILD_ID') == ''"

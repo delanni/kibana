@@ -143,7 +143,7 @@ const pipeline = {
 steps.push({
   command: '.buildkite/scripts/steps/build_kibana.sh',
   label: 'Build Kibana Distribution',
-  agents: expandAgentQueue('c2-8'),
+  agents: expandAgentQueue('c2-8', 115),
   key: 'build',
   if: "build.env('KIBANA_BUILD_ID') == null || build.env('KIBANA_BUILD_ID') == ''",
 });
