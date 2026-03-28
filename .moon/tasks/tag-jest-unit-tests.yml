@@ -12,8 +12,7 @@ tasks:
       - '--runInBand'
       - '--passWithNoTests'
       - '--config'
-      - 'jest.config.js'
-      # - '@files(jest-config)' # uncomment later
+      - '@files(jest-config)'
     deps:
       - '~:source'
       - '~:source-upstream'
