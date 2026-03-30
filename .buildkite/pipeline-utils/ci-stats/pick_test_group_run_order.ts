@@ -31,6 +31,7 @@ import {
   SELECTIVE_TESTS_LABEL,
   CRITICAL_FILES_JEST_UNIT_TESTS,
   touchedCriticalFiles,
+  CRITICAL_FILES_JEST_INTEGRATION_TESTS,
 } from '../affected-packages';
 import { collectEnvFromLabels, expandAgentQueue, getRequiredEnv } from '#pipeline-utils';
 
@@ -255,22 +256,28 @@ export async function pickTestGroupRunOrder() {
 
     console.warn('Filtering Jest unit/integration tests for affected packages:', affectedPackages);
 
-    if (!touchedCriticalFiles(prChangedFiles, CRITICAL_FILES_JEST_UNIT_TESTS)) {
-      if (shouldFilterByAffected) {
-        filteredJestIntegrationConfigs = filterFilesByPackages(
-          jestIntegrationConfigs,
-          affectedPackages
-        );
-        filteredJestUnitConfigs = filterFilesByPackages(jestUnitConfigs, affectedPackages);
-      }
+    if (
+      shouldFilterByAffected &&
+      !touchedCriticalFiles(prChangedFiles, CRITICAL_FILES_JEST_UNIT_TESTS)
+    ) {
+      filteredJestUnitConfigs = filterFilesByPackages(jestUnitConfigs, affectedPackages);
+      console.warn(
+        `Filtering Jest unit tests: ${jestUnitConfigs.length} -> ${filteredJestUnitConfigs.length}`
+      );
     }
 
-    console.warn(
-      `Filtering Jest unit tests: ${jestUnitConfigs.length} -> ${filteredJestUnitConfigs.length}`
-    );
-    console.warn(
-      `Filtering Jest integration tests: ${jestIntegrationConfigs.length} -> ${filteredJestIntegrationConfigs.length}`
-    );
+    if (
+      shouldFilterByAffected &&
+      !touchedCriticalFiles(prChangedFiles, CRITICAL_FILES_JEST_INTEGRATION_TESTS)
+    ) {
+      filteredJestIntegrationConfigs = filterFilesByPackages(
+        jestIntegrationConfigs,
+        affectedPackages
+      );
+      console.warn(
+        `Filtering Jest integration tests: ${jestIntegrationConfigs.length} -> ${filteredJestIntegrationConfigs.length}`
+      );
+    }
   }
 
   if (
