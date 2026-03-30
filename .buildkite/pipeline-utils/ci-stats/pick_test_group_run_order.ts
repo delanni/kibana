@@ -26,6 +26,7 @@ import { serverless, stateful } from '../../ftr_configs_manifests.json';
 import { filterEmptyJestConfigs } from './get_tests_from_config';
 import {
   getAffectedPackages,
+  listChangedFiles,
   filterFilesByPackages,
   SELECTIVE_TESTS_LABEL,
   CRITICAL_FILES_JEST_UNIT_TESTS,
@@ -234,36 +235,43 @@ export async function pickTestGroupRunOrder() {
   // Expand sharded integration configs into shard-annotated entries
   const jestIntegrationConfigs = expandShardedJestConfigs(jestIntegrationConfigsRaw);
 
-  // Apply affected package filtering
-  const affectedPackages = await getAffectedPackages(process.env.GITHUB_PR_MERGE_BASE, {
-    strategy: 'git',
-    includeDownstream: true,
-    ignorePatterns: [], // might want to exclude metadata/text changes in the future
-    ignoreUncategorizedChanges: true,
-  }).catch((error) => {
-    console.error('Error getting affected packages', error);
-    return null;
-  });
+  let filteredJestUnitConfigs = jestUnitConfigs;
+  let filteredJestIntegrationConfigs = jestIntegrationConfigs;
 
-  const shouldFilterByAffected = USE_SELECTIVE_TESTING && affectedPackages;
+  if (USE_SELECTIVE_TESTING && process.env.GITHUB_PR_MERGE_BASE) {
+    const mergeBase = process.env.GITHUB_PR_MERGE_BASE;
+    const affectedPackages = await getAffectedPackages(mergeBase, {
+      strategy: 'git',
+      includeDownstream: true,
+      ignorePatterns: [], // might want to exclude metadata/text changes in the future
+      ignoreUncategorizedChanges: true,
+    }).catch((error) => {
+      console.error('Error getting affected packages', error);
+      return null;
+    });
 
-  if (USE_SELECTIVE_TESTING) {
+    const shouldFilterByAffected = Boolean(affectedPackages);
+    const prChangedFiles = listChangedFiles({ mergeBase, commit: 'HEAD' });
+
     console.warn('Filtering Jest unit/integration tests for affected packages:', affectedPackages);
-  }
 
-  const filteredJestUnitConfigs =
-    shouldFilterByAffected && !touchedCriticalFiles(jestUnitConfigs, CRITICAL_FILES_JEST_UNIT_TESTS)
-      ? filterFilesByPackages(jestUnitConfigs, affectedPackages)
-      : jestUnitConfigs;
-  console.warn(
-    `Filtering Jest unit tests: ${jestUnitConfigs.length} -> ${filteredJestUnitConfigs.length}`
-  );
-  const filteredJestIntegrationConfigs = shouldFilterByAffected
-    ? filterFilesByPackages(jestIntegrationConfigs, affectedPackages)
-    : jestIntegrationConfigs;
-  console.warn(
-    `Filtering Jest integration tests: ${jestIntegrationConfigs.length} -> ${filteredJestIntegrationConfigs.length}`
-  );
+    if (!touchedCriticalFiles(prChangedFiles, CRITICAL_FILES_JEST_UNIT_TESTS)) {
+      if (shouldFilterByAffected) {
+        filteredJestIntegrationConfigs = filterFilesByPackages(
+          jestIntegrationConfigs,
+          affectedPackages
+        );
+        filteredJestUnitConfigs = filterFilesByPackages(jestUnitConfigs, affectedPackages);
+      }
+    }
+
+    console.warn(
+      `Filtering Jest unit tests: ${jestUnitConfigs.length} -> ${filteredJestUnitConfigs.length}`
+    );
+    console.warn(
+      `Filtering Jest integration tests: ${jestIntegrationConfigs.length} -> ${filteredJestIntegrationConfigs.length}`
+    );
+  }
 
   if (
     !ftrConfigsByQueue.size &&

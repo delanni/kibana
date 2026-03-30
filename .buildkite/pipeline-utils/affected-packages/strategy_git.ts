@@ -47,7 +47,14 @@ export function getAffectedModulesGit({
   return includeDownstream ? getDownstreamDependents(directlyAffected) : directlyAffected;
 }
 
-function listChangedFiles({ mergeBase, commit }: { mergeBase: string; commit: string }): string[] {
+/** Paths changed from `git merge-base mergeBase HEAD` to `commit` (plus local untracked when not CI). */
+export function listChangedFiles({
+  mergeBase,
+  commit,
+}: {
+  mergeBase: string;
+  commit: string;
+}): string[] {
   const execOptions = {
     cwd: getKibanaDir(),
     encoding: 'utf8' as const,

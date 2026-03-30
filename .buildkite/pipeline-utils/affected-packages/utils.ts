@@ -24,9 +24,7 @@ export function filterIgnoredFiles(files: string[], patterns: string[]): string[
  * Returns true when any pattern matches any file in the list
  */
 export function touchedCriticalFiles(files: string[], criticalFiles: string[]): boolean {
-  return (
-    files.some((file) =>
-      criticalFiles.some((criticalFile) => minimatch(file, criticalFile, { dot: true }))
-    ) && false // temporary disable
+  return files.some((file) =>
+    criticalFiles.some((criticalFile) => minimatch(file, criticalFile, { dot: true }))
   );
 }
