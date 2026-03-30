@@ -238,6 +238,11 @@ export async function pickTestGroupRunOrder() {
   let filteredJestUnitConfigs = jestUnitConfigs;
   let filteredJestIntegrationConfigs = jestIntegrationConfigs;
 
+  console.log({
+    USE_SELECTIVE_TESTING,
+    GITHUB_PR_MERGE_BASE: process.env.GITHUB_PR_MERGE_BASE,
+  });
+
   if (USE_SELECTIVE_TESTING && process.env.GITHUB_PR_MERGE_BASE) {
     const mergeBase = process.env.GITHUB_PR_MERGE_BASE;
     const affectedPackages = await getAffectedPackages(mergeBase, {
