@@ -35,7 +35,7 @@ import {
 import { collectEnvFromLabels, expandAgentQueue, getRequiredEnv } from '#pipeline-utils';
 
 // TODO: this is always false on on-merge, when switching to enable this by default, check if this is a PR
-const USE_SELECTIVE_TESTING = process.env.GITHUB_LABELS?.includes(SELECTIVE_TESTS_LABEL);
+const USE_SELECTIVE_TESTING = process.env.GITHUB_PR_LABELS?.includes(SELECTIVE_TESTS_LABEL);
 
 const SHARD_ANNOTATION_SEP = '||shard=';
 /**
@@ -237,11 +237,6 @@ export async function pickTestGroupRunOrder() {
 
   let filteredJestUnitConfigs = jestUnitConfigs;
   let filteredJestIntegrationConfigs = jestIntegrationConfigs;
-
-  console.log({
-    USE_SELECTIVE_TESTING,
-    GITHUB_PR_MERGE_BASE: process.env.GITHUB_PR_MERGE_BASE,
-  });
 
   if (USE_SELECTIVE_TESTING && process.env.GITHUB_PR_MERGE_BASE) {
     const mergeBase = process.env.GITHUB_PR_MERGE_BASE;
