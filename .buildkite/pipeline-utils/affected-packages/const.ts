@@ -27,6 +27,7 @@ export const CRITICAL_FILES_JEST_UNIT_TESTS = [
   'src/platform/packages/shared/kbn-test/**/*',
   'src/platform/packages/private/kbn-scout-reporting/src/reporting/jest/**/*',
   'src/platform/packages/shared/react/kibana_mount/test_helpers/react_mount_serializer.ts',
+  'src/platform/packages/private/kbn-jest-serializers/**/*',
   '.buildkite/pipeline-utils/affected-packages/**/*.{ts,js,sh}',
   '.buildkite/pipeline-utils/ci-stats/**/*.{ts,js}',
 ];
