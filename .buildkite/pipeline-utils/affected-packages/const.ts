@@ -19,7 +19,7 @@ export const CRITICAL_FILES_JEST_UNIT_TESTS = [
   'yarn.lock',
   'tsconfig.json',
   'src/platform/packages/shared/kbn-test/**/*',
-  // '.buildkite/pipeline-utils/affected-packages/**/*.{ts,js,sh}',
+  '.buildkite/pipeline-utils/affected-packages/**/*.{ts,js,sh}',
 ];
 
 // TODO: find reasonable set of critical files for integration tests
@@ -30,5 +30,5 @@ export const CRITICAL_FILES_JEST_INTEGRATION_TESTS = [
   'yarn.lock',
   'tsconfig.json',
   'src/platform/packages/shared/kbn-test/**/*',
-  // '.buildkite/pipeline-utils/affected-packages/**/*.{ts,js,sh}',
+  '.buildkite/pipeline-utils/affected-packages/**/*.{ts,js,sh}',
 ];

@@ -7,7 +7,5 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-/** Test commit */
-
 export { ItemBuffer, TimedItemBuffer } from './src';
 export type { ItemBufferParams, TimedItemBufferParams } from './src';
