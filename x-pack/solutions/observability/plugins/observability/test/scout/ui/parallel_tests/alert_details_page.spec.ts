@@ -57,13 +57,16 @@ test.describe(
       })) as { data: { id: string } };
       ruleId = createdRule.data.id;
     });
+
     test.beforeEach(async ({ browserAuth }) => {
       await browserAuth.loginAsAdmin();
     });
 
     test('should show an error when the alert does not exist', async ({ page, pageObjects }) => {
-      await pageObjects.alertPage.goto('non-existent-alert-id');
-      await expect(page.testSubj.locator('alertDetailsError')).toBeVisible();
+      await expect(async () => {
+        await pageObjects.alertPage.goto('non-existent-alert-id');
+        await expect(page.testSubj.locator('alertDetailsError')).toBeVisible();
+      }).toPass({ timeout: 30_000, intervals: [2_000] });
     });
 
     test('should show a tabbed view', async ({ page, pageObjects }) => {

@@ -6,9 +6,12 @@
  */
 
 import { isEmpty, isNumber } from 'lodash';
-import type { TemplatesURLQueryParams, QueryParams } from '../types';
+import type { TemplatesFindRequest } from '../../../../common/types/api/template/v1';
+import type { TemplatesURLQueryParams } from '../types';
 
-export const templatesUrlStateSerializer = (state: QueryParams): TemplatesURLQueryParams => {
+export const templatesUrlStateSerializer = (
+  state: TemplatesFindRequest
+): TemplatesURLQueryParams => {
   const urlState: TemplatesURLQueryParams = {
     ...state,
     search: state.search ? encodeURIComponent(state.search) : undefined,
@@ -16,8 +19,8 @@ export const templatesUrlStateSerializer = (state: QueryParams): TemplatesURLQue
 
   // Filter out empty values
   return Object.entries(urlState).reduce((acc, [key, value]) => {
-    // isEmpty returns true for numbers, so we need to handle them separately
-    if (isEmpty(value) && !isNumber(value)) {
+    // isEmpty returns true for numbers and booleans, so we need to handle them separately
+    if (isEmpty(value) && !isNumber(value) && typeof value !== 'boolean') {
       return acc;
     }
 

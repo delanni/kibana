@@ -8,7 +8,8 @@
  */
 
 export { getFilesForCommit } from './get_files_for_commit';
-export { FileCasingCheck } from './check_file_casing';
+export { runFileCasingCheck } from './run_file_casing_check';
+export { FileCasingCheck } from './file_casing_check';
 export { YamlLintCheck } from './yaml_lint_check';
 export { LinterCheck } from './linter_check';
 export { MoonConfigGenerationCheck } from './moon_config_generation_check';

@@ -15,6 +15,7 @@ export type {
   DashboardApi,
   DashboardInternalApi,
   DashboardCreationOptions,
+  DashboardInitializationState,
 } from './dashboard_api/types';
 export { DASHBOARD_API_TYPE } from './dashboard_api/types';
 export type { DashboardRendererProps } from './dashboard_renderer/dashboard_renderer';
@@ -34,7 +35,6 @@ export {
   DEFAULT_DASHBOARD_NAVIGATION_OPTIONS,
 } from '../common/page_bundle_constants';
 export { cleanEmptyKeys, DashboardAppLocatorDefinition } from '../common/locator/locator';
-export { getDashboardLocatorParamsFromEmbeddable } from '../common/locator/get_dashboard_locator_params';
 
 export function plugin(initializerContext: PluginInitializerContext) {
   return new DashboardPlugin(initializerContext);

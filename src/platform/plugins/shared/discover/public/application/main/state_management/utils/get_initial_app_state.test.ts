@@ -63,6 +63,7 @@ describe('getInitialAppState', () => {
         appState: {
           breakdownField: 'customBreakDownField',
           hideChart: true,
+          hideTable: true,
           rowsPerPage: 250,
           hideAggregatedPreview: true,
         },
@@ -74,8 +75,8 @@ describe('getInitialAppState', () => {
           },
         },
       }),
-      timeRestore: false,
       services,
+      currentDataView: undefined,
     });
     const appState = getInitialAppState({
       hasGlobalState: false,
@@ -91,6 +92,7 @@ describe('getInitialAppState', () => {
         filters: [customFilter],
         grid: {},
         hideChart: true,
+        hideTable: false,
         dataSource: createDataViewDataSource({ dataViewId: 'the-data-view-id' }),
         interval: 'auto',
         query: customQuery,
@@ -120,8 +122,8 @@ describe('getInitialAppState', () => {
           },
         },
       }),
-      timeRestore: false,
       services,
+      currentDataView: undefined,
     });
     const appState = getInitialAppState({
       hasGlobalState: false,
@@ -176,8 +178,12 @@ describe('getInitialAppState', () => {
         "headerRowHeight": undefined,
         "hideAggregatedPreview": undefined,
         "hideChart": undefined,
+        "hideTable": undefined,
         "interval": "auto",
-        "query": undefined,
+        "query": Object {
+          "language": "kuery",
+          "query": "",
+        },
         "rowHeight": undefined,
         "rowsPerPage": undefined,
         "sampleSize": undefined,
@@ -218,8 +224,12 @@ describe('getInitialAppState', () => {
         "headerRowHeight": undefined,
         "hideAggregatedPreview": undefined,
         "hideChart": undefined,
+        "hideTable": undefined,
         "interval": "auto",
-        "query": undefined,
+        "query": Object {
+          "language": "kuery",
+          "query": "",
+        },
         "rowHeight": undefined,
         "rowsPerPage": undefined,
         "sampleSize": undefined,
@@ -230,11 +240,28 @@ describe('getInitialAppState', () => {
     `);
   });
 
+  test('should not allow both chart and table to be hidden at the same time', () => {
+    const services = createDiscoverServicesMock();
+    const actual = getInitialAppState({
+      hasGlobalState: false,
+      initialUrlState: {
+        hideChart: true,
+        hideTable: true,
+      },
+      persistedTab: undefined,
+      dataView: dataViewWithTimefieldMock,
+      services,
+    });
+
+    expect(actual.hideChart).toBe(true);
+    expect(actual.hideTable).toBe(false);
+  });
+
   const getPersistedTab = ({ services }: { services: DiscoverServices }) =>
     fromTabStateToSavedObjectTab({
       tab: getTabStateMock({ id: 'mock-tab' }),
-      timeRestore: false,
       services,
+      currentDataView: undefined,
     });
 
   test('should set view mode correctly', () => {
@@ -514,6 +541,38 @@ describe('getInitialAppState', () => {
               expect(appState).toEqual(
                 expect.objectContaining({
                   query: { esql: 'FROM the-data-view-title' },
+                })
+              );
+            });
+
+            it('should prefer the root profile default esql query when provided', () => {
+              // Given
+              const services = createDiscoverServicesMock();
+              services.storage.get = jest.fn().mockReturnValue(undefined);
+              services.uiSettings.get = jest.fn().mockReturnValue(true);
+              services.discoverFeatureFlags.getIsEsqlDefault = jest.fn(() => true);
+
+              const defaultProfileEsqlQuery = {
+                query: 'FROM test | WHERE 1 == 1',
+              };
+
+              // When
+              const appState = getInitialAppState({
+                hasGlobalState: false,
+                initialUrlState: undefined,
+                persistedTab: undefined,
+                dataView: new DataView({
+                  spec: dataViewMock.toSpec(),
+                  fieldFormats: {} as DataView['fieldFormats'],
+                }),
+                services,
+                defaultProfileEsqlQuery,
+              });
+
+              // Then
+              expect(appState).toEqual(
+                expect.objectContaining({
+                  query: { esql: defaultProfileEsqlQuery.query },
                 })
               );
             });

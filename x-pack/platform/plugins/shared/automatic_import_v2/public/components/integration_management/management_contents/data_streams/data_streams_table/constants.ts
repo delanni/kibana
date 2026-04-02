@@ -15,6 +15,7 @@ export const STATUS_COLOR_MAP: Record<DataStreamResponse['status'], string> = {
   failed: 'danger',
   cancelled: 'warning',
   approved: 'success',
+  deleting: 'default',
 };
 
 export const STATUS_ICON_MAP: Record<DataStreamResponse['status'], string> = {
@@ -22,8 +23,9 @@ export const STATUS_ICON_MAP: Record<DataStreamResponse['status'], string> = {
   processing: '',
   completed: 'dot',
   failed: 'cross',
-  cancelled: 'minusInCircle',
+  cancelled: 'minusCircle',
   approved: 'check',
+  deleting: '',
 };
 
 export const STATUS_TEXT_MAP: Record<DataStreamResponse['status'], string> = {
@@ -33,4 +35,5 @@ export const STATUS_TEXT_MAP: Record<DataStreamResponse['status'], string> = {
   failed: i18n.STATUS_LABELS.failed,
   cancelled: i18n.STATUS_LABELS.cancelled,
   approved: i18n.STATUS_LABELS.approved,
+  deleting: i18n.STATUS_LABELS.deleting,
 };

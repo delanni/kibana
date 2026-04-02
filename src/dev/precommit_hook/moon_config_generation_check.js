@@ -22,9 +22,10 @@ export class MoonConfigGenerationCheck extends PrecommitCheck {
   shouldExecute({ files, deletedFiles }) {
     return files
       .concat(deletedFiles)
-      .some(
-        (f) => f.relativePath.endsWith('moon.yml') || f.relativePath.endsWith('moon.extend.yml')
-      );
+      .some((f) => {
+        const p = f.getRelativePath();
+        return p.endsWith('moon.yml') || p.endsWith('moon.extend.yml');
+      });
   }
 
   async execute(log, files, options) {
@@ -39,7 +40,7 @@ export class MoonConfigGenerationCheck extends PrecommitCheck {
     );
 
     const affectedProjects = files
-      .map((f) => f.relativePath)
+      .map((f) => f.getRelativePath())
       .filter((f) => f.endsWith('moon.yml') || f.endsWith('moon.extend.yml'))
       .map((file) => path.dirname(file))
       .filter((v, i, a) => a.indexOf(v) === i) // unique

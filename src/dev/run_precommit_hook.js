@@ -33,7 +33,9 @@ run(
   async ({ log, flags }) => {
     process.env.IS_KIBANA_PRECOMIT_HOOK = 'true';
 
-    const allFiles = await getFilesForCommit(flags.ref);
+    const allFiles = await getFilesForCommit(flags.ref, {
+      includeUntracked: Boolean(flags['include-untracked']),
+    });
     const files = allFiles.filter((f) => f.getGitStatus() !== 'deleted');
     const deletedFiles = allFiles.filter((f) => f.getGitStatus() === 'deleted');
 
@@ -93,16 +95,18 @@ run(
     Run checks on files that are staged for commit by default
   `,
     flags: {
-      boolean: ['fix', 'stage'],
+      boolean: ['fix', 'stage', 'include-untracked'],
       string: ['max-files', 'ref'],
       default: {
         fix: false,
         stage: true,
+        'include-untracked': false,
       },
       help: `
         --fix              Execute checks with possible fixes
         --max-files        Max files number to check against. If exceeded the script will skip the execution
         --ref              Run checks against any git ref files (example HEAD or <commit_sha>) instead of running against staged ones
+        --include-untracked Include untracked files in addition to diff files
         --no-stage         By default when using --fix the changes are staged, use --no-stage to disable that behavior
       `,
     },

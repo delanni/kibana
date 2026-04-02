@@ -11,24 +11,33 @@ import { isOfAggregateQueryType, type AggregateQuery, type TimeRange } from '@kb
 import type { ESQLControlVariable } from '@kbn/esql-types';
 import type { ReactElement } from 'react';
 import { createContext, useContext } from 'react';
-import type { RequestAdapter } from '@kbn/inspector-plugin/public';
+import type { BehaviorSubject } from 'rxjs';
+import type { DataTableRecord } from '@kbn/discover-utils';
+import type { UnifiedDataTableProps } from '@kbn/unified-data-table';
 import type {
   CascadedDocumentsState,
   DiscoverAppState,
   internalStateActions,
 } from '../../../state_management/redux';
 import type { UpdateESQLQueryFn } from '../../../../../context_awareness';
+import type { CascadedDocumentsFetcher } from '../../../data_fetching/cascaded_documents_fetcher';
 
 export interface CascadedDocumentsContext
   extends Pick<CascadedDocumentsState, 'availableCascadeGroups' | 'selectedCascadeGroups'> {
+  cascadedDocumentsFetcher: CascadedDocumentsFetcher;
   esqlQuery: AggregateQuery;
   esqlVariables: ESQLControlVariable[] | undefined;
   timeRange: TimeRange | undefined;
   viewModeToggle: ReactElement | undefined;
+  expandedDoc$: BehaviorSubject<DataTableRecord | undefined>;
+  expandedDocOwner$: BehaviorSubject<string | undefined>;
+  getExpandedDocSetter: (owner: string) => NonNullable<UnifiedDataTableProps['setExpandedDoc']>;
+  getRenderDocumentViewMetaSetter: (
+    owner: string
+  ) => UnifiedDataTableProps['setRenderDocumentViewMeta'] | undefined;
   cascadeGroupingChangeHandler: (cascadeGrouping: string[]) => void;
   onUpdateESQLQuery: UpdateESQLQueryFn;
   openInNewTab: (...args: Parameters<typeof internalStateActions.openInNewTab>) => void;
-  registerCascadeRequestsInspectorAdapter: (requestAdapter: RequestAdapter) => void;
 }
 
 const cascadedDocumentsContext = createContext<CascadedDocumentsContext | undefined>(undefined);

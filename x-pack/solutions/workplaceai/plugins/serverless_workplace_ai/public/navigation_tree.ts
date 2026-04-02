@@ -8,7 +8,6 @@
 import type { NavigationTreeDefinition } from '@kbn/core-chrome-browser';
 import { i18n } from '@kbn/i18n';
 import { DATA_SOURCES_SHORT_TITLE } from '@kbn/data-sources-plugin/common';
-import { iconRobot } from './assets/robot';
 
 export const createNavigationTree = (): NavigationTreeDefinition => {
   return {
@@ -20,7 +19,7 @@ export const createNavigationTree = (): NavigationTreeDefinition => {
         breadcrumbStatus: 'hidden',
       },
       {
-        icon: iconRobot,
+        icon: 'productAgent',
         link: 'agent_builder',
       },
       {
@@ -34,12 +33,14 @@ export const createNavigationTree = (): NavigationTreeDefinition => {
       },
       {
         link: 'dashboards',
+        icon: 'productDashboard',
         getIsActive: ({ pathNameSerialized, prepend }) => {
           return pathNameSerialized.startsWith(prepend('/app/dashboards'));
         },
       },
       {
         link: 'discover',
+        icon: 'productDiscover',
       },
     ],
     footer: [
@@ -49,7 +50,7 @@ export const createNavigationTree = (): NavigationTreeDefinition => {
           defaultMessage: 'Developer tools',
         }),
         link: 'dev_tools',
-        icon: 'editorCodeBlock',
+        icon: 'code',
       },
       {
         id: 'management',
@@ -98,6 +99,7 @@ export const createNavigationTree = (): NavigationTreeDefinition => {
             }),
             children: [
               { link: 'management:genAiSettings', breadcrumbStatus: 'hidden' },
+              { link: 'management:evals', breadcrumbStatus: 'hidden' },
               {
                 link: 'management:observabilityAiAssistantManagement',
                 breadcrumbStatus: 'hidden',

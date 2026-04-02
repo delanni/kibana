@@ -51,8 +51,8 @@ import type { ExecuteBulkActionsDryRun } from './use_bulk_actions_dry_run';
 import { computeDryRunEditPayload } from './utils/compute_dry_run_edit_payload';
 import { transformExportDetailsToDryRunResult } from './utils/dry_run_result';
 import { prepareSearchParams } from './utils/prepare_search_params';
+import { useGapAutoFillSchedulerContext } from '../../../../rule_gaps/context/gap_auto_fill_scheduler_context';
 import { ManualRuleRunEventTypes } from '../../../../../common/lib/telemetry';
-import { useIsExperimentalFeatureEnabled } from '../../../../../common/hooks/use_experimental_features';
 import { useUpsellingMessage } from '../../../../../common/hooks/use_upselling';
 import { useLicense } from '../../../../../common/hooks/use_license';
 import { MINIMUM_LICENSE_FOR_SUPPRESSION } from '../../../../../../common/detection_engine/constants';
@@ -97,6 +97,8 @@ export const useBulkActions = ({
   const { executeBulkAction } = useExecuteBulkAction();
   const { bulkExport } = useBulkExport();
   const downloadExportedRules = useDownloadExportedRules();
+  const { scheduler } = useGapAutoFillSchedulerContext();
+  const activeSchedulerId = scheduler?.enabled ? scheduler.id : undefined;
   const {
     timelinePrivileges: { crud: canCreateTimelines },
   } = useUserPrivileges();
@@ -116,10 +118,10 @@ export const useBulkActions = ({
       ...(filterOptions?.gapFillStatuses?.length && {
         gapFillStatuses: filterOptions.gapFillStatuses,
       }),
+      ...(activeSchedulerId && { schedulerId: activeSchedulerId }),
     };
-  }, [kql, filterOptions]);
+  }, [kql, filterOptions, activeSchedulerId]);
 
-  const isBulkFillRuleGapsEnabled = useIsExperimentalFeatureEnabled('bulkFillRuleGapsEnabled');
   const alertSuppressionUpsellingMessage = useUpsellingMessage('alert_suppression_rule_form');
   const license = useLicense();
   const isAlertSuppressionLicenseValid = license.isAtLeast(MINIMUM_LICENSE_FOR_SUPPRESSION);
@@ -477,6 +479,7 @@ export const useBulkActions = ({
                   filterOptions,
                   gapRange: globalQuery.gapRange,
                   gapFillStatuses: filterOptions.gapFillStatuses,
+                  schedulerId: activeSchedulerId,
                 }
               : { selectedRuleIds }),
             dryRunResult,
@@ -607,18 +610,14 @@ export const useBulkActions = ({
               onClick: handleScheduleRuleRunAction,
               icon: undefined,
             },
-            ...(isBulkFillRuleGapsEnabled
-              ? [
-                  {
-                    key: i18n.BULK_ACTION_FILL_RULE_GAPS,
-                    name: i18n.BULK_ACTION_FILL_RULE_GAPS,
-                    'data-test-subj': 'scheduleFillGaps',
-                    disabled: containsLoading || (!containsEnabled && !isAllSelected),
-                    onClick: handleScheduleFillGapsAction,
-                    icon: undefined,
-                  },
-                ]
-              : []),
+            {
+              key: i18n.BULK_ACTION_FILL_RULE_GAPS,
+              name: i18n.BULK_ACTION_FILL_RULE_GAPS,
+              'data-test-subj': 'scheduleFillGaps',
+              disabled: containsLoading || (!containsEnabled && !isAllSelected),
+              onClick: handleScheduleFillGapsAction,
+              icon: undefined,
+            },
             {
               key: i18n.BULK_ACTION_DISABLE,
               name: i18n.BULK_ACTION_DISABLE,
@@ -792,7 +791,7 @@ export const useBulkActions = ({
       alertSuppressionUpsellingMessage,
       globalQuery,
       showBulkFillRuleGapsConfirmation,
-      isBulkFillRuleGapsEnabled,
+      activeSchedulerId,
     ]
   );
 

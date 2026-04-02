@@ -10,9 +10,7 @@ import { EuiSpacer } from '@elastic/eui';
 import { FormattedMessage } from '@kbn/i18n-react';
 
 import { NewChat } from '@kbn/elastic-assistant';
-
-import { AssistantIcon } from '@kbn/ai-assistant-icon';
-import { css } from '@emotion/react';
+import { AiButton } from '@kbn/shared-ux-ai-components';
 import { SecurityAgentBuilderAttachments } from '../../../../../common/constants';
 import { METRIC_TYPE, TELEMETRY_EVENT, track } from '../../../../common/lib/telemetry';
 import { useAssistantAvailability } from '../../../../assistant/use_assistant_availability';
@@ -136,7 +134,7 @@ Proposed solution should be valid and must not contain new line symbols (\\n)`;
               onClick={openAgentBuilderFlyout}
               size="xs"
               telemetry={{
-                pathway: 'rule_creation',
+                pathway: 'rule_query_error',
                 attachments: ['rule'],
               }}
             />
@@ -154,13 +152,14 @@ Proposed solution should be valid and must not contain new line symbols (\\n)`;
               isAssistantEnabled={isAssistantEnabled}
               onExportCodeBlock={handleOnExportCodeBlock}
             >
-              <AssistantIcon
-                size="s"
-                css={css`
-                  vertical-align: inherit;
-                `}
-              />
-              {i18n.ASK_ASSISTANT_ERROR_BUTTON}
+              <AiButton
+                iconType="aiAssistantLogo"
+                size="xs"
+                variant="empty"
+                onClick={onShowOverlay}
+              >
+                {i18n.ASK_ASSISTANT_ERROR_BUTTON}
+              </AiButton>
             </NewChat>
           ),
         }}

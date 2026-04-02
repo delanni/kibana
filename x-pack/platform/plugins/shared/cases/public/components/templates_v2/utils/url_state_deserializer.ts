@@ -5,15 +5,16 @@
  * 2.0.
  */
 
-import type { QueryParams, TemplatesURLQueryParams } from '../types';
+import type { TemplatesFindRequest } from '../../../../common/types/api/template/v1';
+import type { TemplatesURLQueryParams } from '../types';
 import { DEFAULT_QUERY_PARAMS } from '../constants';
 import { sanitizeState } from './sanitize_state';
 import { stringToIntegerWithDefault } from '.';
 
 export const templatesUrlStateDeserializer = (
   urlParamsMap: TemplatesURLQueryParams
-): Partial<QueryParams> => {
-  const result: Partial<QueryParams> = {};
+): Partial<TemplatesFindRequest> => {
+  const result: Partial<TemplatesFindRequest> = {};
 
   for (const [key, value] of Object.entries(urlParamsMap)) {
     if (Object.hasOwn(DEFAULT_QUERY_PARAMS, key)) {
@@ -23,7 +24,7 @@ export const templatesUrlStateDeserializer = (
 
   const { page, perPage, search, ...rest } = result;
 
-  const parsed: Partial<QueryParams> = { ...rest };
+  const parsed: Partial<TemplatesFindRequest> = { ...rest };
 
   if (page !== undefined) {
     parsed.page = stringToIntegerWithDefault(page, DEFAULT_QUERY_PARAMS.page);
@@ -35,6 +36,16 @@ export const templatesUrlStateDeserializer = (
 
   if (search !== undefined) {
     parsed.search = decodeURIComponent(search);
+  }
+
+  const rawIsEnabled = (result as Record<string, unknown>).isEnabled;
+  if (rawIsEnabled !== undefined) {
+    parsed.isEnabled =
+      rawIsEnabled === true || rawIsEnabled === 'true'
+        ? true
+        : rawIsEnabled === false || rawIsEnabled === 'false'
+        ? false
+        : undefined;
   }
 
   return sanitizeState(parsed);

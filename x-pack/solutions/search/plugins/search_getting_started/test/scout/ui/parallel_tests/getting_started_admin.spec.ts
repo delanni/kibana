@@ -5,8 +5,8 @@
  * 2.0.
  */
 
-import { tags } from '@kbn/scout-search';
 import { expect } from '@kbn/scout-search/ui';
+import { tags } from '@kbn/scout-search';
 import { test } from '../fixtures';
 
 test.describe(
@@ -83,6 +83,11 @@ test.describe(
         await expect(timeSeriesAnalysisButton).toBeVisible();
       });
 
+      await test.step('renders kibana version badge', async () => {
+        const versionBadge = await pageObjects.gettingStarted.getKibanaVersionBadge();
+        await expect(versionBadge).toBeVisible();
+      });
+
       await test.step('renders footer links with correct hrefs', async () => {
         const searchLabsLink = await pageObjects.gettingStarted.getFooterLink('SearchLabs');
         await expect(searchLabsLink).toHaveAttribute('href', /search-labs/);
@@ -110,7 +115,7 @@ test.describe(
       await test.step('navigates to create index page', async () => {
         await pageObjects.gettingStarted.goto();
         await pageObjects.gettingStarted.selectAddDataOption('gettingStartedCreateIndexMenuItem');
-        await expect(page).toHaveURL(/indices\/create/);
+        await expect(page).toHaveURL(/index_management\/indices/);
       });
     });
 
@@ -146,8 +151,9 @@ test.describe(
 
     test('Tutorial cards open embedded console', async ({ pageObjects }) => {
       await pageObjects.gettingStarted.expandTutorialCards();
+
       await test.step('search basics card opens console', async () => {
-        await pageObjects.gettingStarted.clickTutorialCard('search_basics');
+        await pageObjects.gettingStarted.clickTutorialCardButton('search_basics');
 
         const embeddedConsole = await pageObjects.gettingStarted.getEmbeddedConsole();
         await expect(embeddedConsole).toBeVisible();

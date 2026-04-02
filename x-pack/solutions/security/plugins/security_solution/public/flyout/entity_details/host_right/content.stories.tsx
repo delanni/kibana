@@ -40,7 +40,7 @@ export const Default = {
       contextID={'test-host-details'}
       scopeId={'test-scopeId'}
       openDetailsPanel={() => {}}
-      hostName={'test-host-name'}
+      identityFields={{ 'host.name': 'test-host-name' }}
       onAssetCriticalityChange={() => {}}
       recalculatingScore={false}
       isPreviewMode={false}
@@ -64,13 +64,12 @@ export const NoObservedData = {
           isLoading: false,
           date: undefined,
         },
-        anomalies: { isLoading: false, anomalies: null, jobNameById: {} },
       }}
       riskScoreState={riskScoreData}
       contextID={'test-host-details'}
       scopeId={'test-scopeId'}
       openDetailsPanel={() => {}}
-      hostName={'test-host-name'}
+      identityFields={{ 'host.name': 'test-host-name' }}
       onAssetCriticalityChange={() => {}}
       recalculatingScore={false}
       isPreviewMode={false}
@@ -94,13 +93,12 @@ export const Loading = {
           isLoading: true,
           date: undefined,
         },
-        anomalies: { isLoading: true, anomalies: null, jobNameById: {} },
       }}
       riskScoreState={riskScoreData}
       contextID={'test-host-details'}
       scopeId={'test-scopeId'}
       openDetailsPanel={() => {}}
-      hostName={'test-host-name'}
+      identityFields={{ 'host.name': 'test-host-name' }}
       onAssetCriticalityChange={() => {}}
       recalculatingScore={false}
       isPreviewMode={false}

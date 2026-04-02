@@ -10,10 +10,7 @@ import { i18n } from '@kbn/i18n';
 import { AIChatExperience } from '@kbn/ai-assistant-common';
 
 import { SecurityPageName } from '@kbn/security-solution-navigation';
-import {
-  defaultNavigationTree,
-  LazyIconAgentBuilder,
-} from '@kbn/security-solution-navigation/navigation_tree';
+import { defaultNavigationTree } from '@kbn/security-solution-navigation/navigation_tree';
 import { i18nStrings, securityLink } from '@kbn/security-solution-navigation/links';
 
 import { AiNavigationIcon } from './icon';
@@ -52,7 +49,7 @@ export const createAiNavigationTree = (
         {
           id: SecurityPageName.configurations,
           link: securityLink(SecurityPageName.configurations),
-          icon: 'controlsHorizontal',
+          icon: 'controls',
           children: [
             {
               id: SecurityPageName.configurationsIntegrations,
@@ -79,12 +76,12 @@ export const createAiNavigationTree = (
       children: [
         {
           link: 'discover' as AppDeepLinkId,
+          icon: 'productDiscover',
         },
         ...(chatExperience === AIChatExperience.Agent
           ? [
               {
-                // TODO: update icon to 'robot' once it's available in EUI
-                icon: LazyIconAgentBuilder,
+                icon: 'productAgent',
                 link: 'agent_builder' as AppDeepLinkId,
               },
             ]
@@ -108,12 +105,12 @@ export const createAiNavigationTree = (
     {
       id: SecurityPageName.landing,
       link: securityLink(SecurityPageName.landing),
-      icon: 'launch',
+      icon: 'rocket',
     },
     {
       link: 'dev_tools',
       title: i18nStrings.devTools,
-      icon: 'editorCodeBlock',
+      icon: 'code',
     },
     {
       title: i18nStrings.ingestAndManageData.title,

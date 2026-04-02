@@ -40,7 +40,7 @@ export const Default = {
       contextID={'test-user-details'}
       scopeId={'test-scopeId'}
       openDetailsPanel={() => {}}
-      userName={'test-user-name'}
+      identityFields={{ 'user.name': 'test-user-name' }}
       onAssetCriticalityChange={() => {}}
       recalculatingScore={false}
       isPreviewMode={false}
@@ -58,7 +58,7 @@ export const IntegrationDisabled = {
       contextID={'test-user-details'}
       scopeId={'test-scopeId'}
       openDetailsPanel={() => {}}
-      userName={'test-user-name'}
+      identityFields={{ 'user.name': 'test-user-name' }}
       onAssetCriticalityChange={() => {}}
       recalculatingScore={false}
       isPreviewMode={false}
@@ -76,7 +76,7 @@ export const NoManagedData = {
       contextID={'test-user-details'}
       scopeId={'test-scopeId'}
       openDetailsPanel={() => {}}
-      userName={'test-user-name'}
+      identityFields={{ 'user.name': 'test-user-name' }}
       onAssetCriticalityChange={() => {}}
       recalculatingScore={false}
       isPreviewMode={false}
@@ -112,13 +112,12 @@ export const NoObservedData = {
           isLoading: false,
           date: undefined,
         },
-        anomalies: { isLoading: false, anomalies: null, jobNameById: {} },
       }}
       riskScoreState={riskScoreData}
       contextID={'test-user-details'}
       scopeId={'test-scopeId'}
       openDetailsPanel={() => {}}
-      userName={'test-user-name'}
+      identityFields={{ 'user.name': 'test-user-name' }}
       onAssetCriticalityChange={() => {}}
       recalculatingScore={false}
       isPreviewMode={false}
@@ -154,13 +153,12 @@ export const Loading = {
           isLoading: true,
           date: undefined,
         },
-        anomalies: { isLoading: true, anomalies: null, jobNameById: {} },
       }}
       riskScoreState={riskScoreData}
       contextID={'test-user-details'}
       scopeId={'test-scopeId'}
       openDetailsPanel={() => {}}
-      userName={'test-user-name'}
+      identityFields={{ 'user.name': 'test-user-name' }}
       onAssetCriticalityChange={() => {}}
       recalculatingScore={false}
       isPreviewMode={false}

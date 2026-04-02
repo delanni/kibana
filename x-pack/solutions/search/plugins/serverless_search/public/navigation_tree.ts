@@ -5,7 +5,6 @@
  * 2.0.
  */
 
-import { lazy } from 'react';
 import type { Location } from 'history';
 
 import type { ApplicationStart } from '@kbn/core-application-browser';
@@ -25,10 +24,6 @@ function isEditingFromDashboard(
     location.hash.includes('originatingApp=dashboards');
   return isVizApp && hasOriginatingApp;
 }
-
-const LazyIconAgents = lazy(() =>
-  import('@kbn/search-shared-ui/src/v2_icons/robot').then((m) => ({ default: m.iconRobot }))
-);
 
 const NAV_TITLE = i18n.translate('xpack.serverlessSearch.nav.title', {
   defaultMessage: 'Elasticsearch',
@@ -59,7 +54,11 @@ const AI_TITLE = i18n.translate('xpack.serverlessSearch.nav.adminAndSettings.ai.
 export function createNavigationTree({
   isAppRegistered,
   showAiAssistant = true,
-}: ApplicationStart & { showAiAssistant?: boolean }): NavigationTreeDefinition {
+  showAlertingV2 = false,
+}: ApplicationStart & {
+  showAiAssistant?: boolean;
+  showAlertingV2?: boolean;
+}): NavigationTreeDefinition {
   return {
     body: [
       {
@@ -71,15 +70,17 @@ export function createNavigationTree({
       },
       {
         link: 'discover',
+        icon: 'productDiscover',
       },
       {
         link: 'dashboards',
+        icon: 'productDashboard',
         getIsActive: ({ pathNameSerialized, prepend, location }) =>
           pathNameSerialized.startsWith(prepend('/app/dashboards')) ||
           isEditingFromDashboard(location, pathNameSerialized, prepend),
       },
       {
-        icon: LazyIconAgents, // Temp svg until we have icon in EUI
+        icon: 'productAgent',
         link: 'agent_builder',
       },
       {
@@ -132,7 +133,7 @@ export function createNavigationTree({
             ],
           },
         ],
-        icon: 'machineLearningApp',
+        icon: 'productML',
         id: 'machine_learning',
         renderAs: 'panelOpener',
         title: MACHINE_LEARNING_TITLE,
@@ -141,18 +142,7 @@ export function createNavigationTree({
         children: [
           {
             children: [
-              {
-                getIsActive: ({ pathNameSerialized, prepend }) => {
-                  return (
-                    pathNameSerialized.startsWith(
-                      prepend('/app/elasticsearch/index_management/indices')
-                    ) ||
-                    pathNameSerialized.startsWith(prepend('/app/management/data/index_management'))
-                  );
-                },
-                link: 'management:index_management',
-                breadcrumbStatus: 'hidden',
-              },
+              { link: 'management:index_management', breadcrumbStatus: 'hidden' },
               { link: 'management:index_lifecycle_management', breadcrumbStatus: 'hidden' },
               { link: 'management:snapshot_restore', breadcrumbStatus: 'hidden' },
               { link: 'management:transform', breadcrumbStatus: 'hidden' },
@@ -197,7 +187,7 @@ export function createNavigationTree({
     footer: [
       {
         id: 'search_getting_started',
-        icon: 'launch',
+        icon: 'rocket',
         link: 'searchGettingStarted',
       },
       {
@@ -248,6 +238,25 @@ export function createNavigationTree({
               },
             ],
           },
+          ...(showAlertingV2
+            ? [
+                {
+                  id: 'v2_alerting_preview',
+                  title: i18n.translate('xpack.serverlessSearch.nav.management.v2AlertingPreview', {
+                    defaultMessage: 'V2 Alerting Preview',
+                  }),
+                  renderAs: 'panelOpener' as const,
+                  breadcrumbStatus: 'hidden' as const,
+                  children: [
+                    { link: 'management:rules' as const, breadcrumbStatus: 'hidden' as const },
+                    {
+                      link: 'management:notification_policies' as const,
+                      breadcrumbStatus: 'hidden' as const,
+                    },
+                  ],
+                },
+              ]
+            : []),
           {
             id: 'settings_alerts',
             title: ALERTS_AND_INSIGHTS_TITLE,
@@ -265,7 +274,17 @@ export function createNavigationTree({
               { link: 'management:trained_models', breadcrumbStatus: 'hidden' },
               {
                 id: 'searchInferenceEndpoints',
-                link: 'searchInferenceEndpoints',
+                link: 'management:inference_endpoints',
+                breadcrumbStatus: 'hidden',
+              },
+              {
+                id: 'searchInferenceEndpointsModelSettings',
+                link: 'management:model_settings',
+                breadcrumbStatus: 'hidden',
+              },
+              {
+                id: 'searchInferenceEndpointsElasticInferenceService',
+                link: 'management:elastic_inference_service',
                 breadcrumbStatus: 'hidden',
               },
               { link: 'management:anomaly_detection' },
@@ -277,6 +296,7 @@ export function createNavigationTree({
             title: AI_TITLE,
             children: [
               { link: 'management:genAiSettings', breadcrumbStatus: 'hidden' },
+              { link: 'management:evals', breadcrumbStatus: 'hidden' },
               ...(showAiAssistant
                 ? [
                     {

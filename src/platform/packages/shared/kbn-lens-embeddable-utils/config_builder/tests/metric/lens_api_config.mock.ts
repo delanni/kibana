@@ -22,7 +22,7 @@ export const breakdownMetricAPIAttributes = {
       color: {
         type: 'dynamic',
         range: 'absolute',
-        steps: [{ type: 'from', from: 0, color: 'red' }],
+        steps: [{ lt: 0, color: 'red' }],
       },
     },
     {
@@ -34,7 +34,7 @@ export const breakdownMetricAPIAttributes = {
   breakdown_by: {
     operation: 'terms',
     fields: ['extension.keyword'],
-    size: 5,
+    limit: 5,
   },
 } as MetricState;
 
@@ -51,16 +51,18 @@ export const complexMetricAPIAttributes = {
       color: {
         type: 'dynamic',
         range: 'absolute',
-        steps: [{ type: 'from', from: 0, color: 'red' }],
+        steps: [{ lt: 0, color: 'red' }],
       },
       background_chart: {
         type: 'bar',
-        goal_value: {
+        max_value: {
           operation: 'percentile',
           field: 'bytes',
           percentile: 95,
         },
       },
+      position: 'top',
+      title_weight: 'normal',
     },
     {
       type: 'secondary',
@@ -72,12 +74,15 @@ export const complexMetricAPIAttributes = {
         palette: 'status',
         value: false,
       },
+      value: {
+        alignment: 'left',
+      },
     },
   ],
   breakdown_by: {
     operation: 'terms',
     fields: ['extension.keyword'],
-    size: 5,
+    limit: 5,
   },
 } as MetricState;
 
@@ -109,11 +114,11 @@ export const complexESQLMetricAPIAttributes = {
       color: {
         type: 'dynamic',
         range: 'absolute',
-        steps: [{ type: 'from', from: 0, color: 'red' }],
+        steps: [{ lt: 0, color: 'red' }],
       },
       background_chart: {
         type: 'bar',
-        goal_value: {
+        max_value: {
           operation: 'value',
           column: 'bytes',
         },
@@ -152,7 +157,7 @@ export const metricAPIWithTermsRankedBySecondary = {
       color: {
         type: 'dynamic',
         range: 'absolute',
-        steps: [{ type: 'from', from: 0, color: 'red' }],
+        steps: [{ lt: 0, color: 'red' }],
       },
     },
     {
@@ -164,7 +169,7 @@ export const metricAPIWithTermsRankedBySecondary = {
   breakdown_by: {
     operation: 'terms',
     fields: ['extension.keyword'],
-    size: 5,
+    limit: 5,
     rank_by: {
       type: 'column',
       metric: 1,

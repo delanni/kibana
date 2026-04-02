@@ -58,6 +58,12 @@ const mappings = {
     isDefault: {
       type: 'boolean',
     },
+    isLatest: {
+      type: 'boolean',
+    },
+    isEnabled: {
+      type: 'boolean',
+    },
   },
 } as const;
 

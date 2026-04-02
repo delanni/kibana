@@ -33,19 +33,24 @@ import { useKibana } from '../../../../common/lib/kibana';
 import { getEmptyTagValue } from '../../../../common/components/empty_value';
 import * as i18n from './translations';
 import type { Gap, GapStatus } from '../../types';
-import { getStatusLabel } from './utils';
+import { getStatusLabel, getReasonLabel } from './utils';
 import { GapStatusFilter } from './status_filter';
 import { useFindGapsForRule } from '../../api/hooks/use_find_gaps_for_rule';
 import { FillGap } from './fill_gap';
 import { FillRuleGapsButton } from './fill_rule_gaps_button';
-import { useIsExperimentalFeatureEnabled } from '../../../../common/hooks/use_experimental_features';
 import { useUserPrivileges } from '../../../../common/components/user_privileges';
+import { useIsExperimentalFeatureEnabled } from '../../../../common/hooks/use_experimental_features';
 
 const DatePickerEuiFlexItem = styled(EuiFlexItem)`
   max-width: 582px;
 `;
 
-const getGapsTableColumns = (hasCRUDPermissions: boolean, ruleId: string, enabled: boolean) => {
+const getGapsTableColumns = (
+  hasCRUDPermissions: boolean,
+  ruleId: string,
+  enabled: boolean,
+  gapReasonDetectionEnabled: boolean
+) => {
   const fillActions = {
     name: i18n.GAPS_TABLE_ACTIONS_LABEL,
     align: 'right' as const,
@@ -81,6 +86,21 @@ const getGapsTableColumns = (hasCRUDPermissions: boolean, ruleId: string, enable
       },
       width: '10%',
     },
+    ...(gapReasonDetectionEnabled
+      ? [
+          {
+            field: 'reason',
+            name: (
+              <TableHeaderTooltipCell
+                title={i18n.GAPS_TABLE_REASON_LABEL}
+                tooltipContent={i18n.GAPS_TABLE_REASON_LABEL_TOOLTIP}
+              />
+            ),
+            render: (value: Gap['reason']) => getReasonLabel(value?.type),
+            width: '10%',
+          },
+        ]
+      : []),
     {
       field: '@timestamp',
       sortable: true,
@@ -193,11 +213,10 @@ export const RuleGaps = ({ ruleId, enabled }: { ruleId: string; enabled: boolean
   });
   const { timelines } = useKibana().services;
   const canEditRules = useUserPrivileges().rulesPrivileges.rules.edit;
+  const gapReasonDetectionEnabled = useIsExperimentalFeatureEnabled('gapReasonDetectionEnabled');
   const [refreshInterval, setRefreshInterval] = useState(1000);
   const [isPaused, setIsPaused] = useState(true);
   const [selectedStatuses, setSelectedStatuses] = useState<GapStatus[]>([]);
-  const isBulkFillRuleGapsEnabled = useIsExperimentalFeatureEnabled('bulkFillRuleGapsEnabled');
-  const isFillRuleGapsButtonEnabled = canEditRules && isBulkFillRuleGapsEnabled;
   const [sort, setSort] = useState<{ field: keyof Gap; direction: 'desc' | 'asc' }>({
     field: '@timestamp',
     direction: 'desc',
@@ -229,7 +248,7 @@ export const RuleGaps = ({ ruleId, enabled }: { ruleId: string; enabled: boolean
     totalItemCount: Math.min(totalItemCount, MaxItemCount),
   };
 
-  const columns = getGapsTableColumns(canEditRules, ruleId, enabled);
+  const columns = getGapsTableColumns(canEditRules, ruleId, enabled, gapReasonDetectionEnabled);
 
   const onRefreshCallback = () => {
     refetch();
@@ -306,7 +325,7 @@ export const RuleGaps = ({ ruleId, enabled }: { ruleId: string; enabled: boolean
                 />
               </DatePickerEuiFlexItem>
             </EuiFlexItem>
-            {isFillRuleGapsButtonEnabled && (
+            {canEditRules && (
               <EuiFlexItem grow={false}>
                 <FillRuleGapsButton ruleId={ruleId} />
               </EuiFlexItem>

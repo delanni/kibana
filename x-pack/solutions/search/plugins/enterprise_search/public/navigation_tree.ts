@@ -5,8 +5,6 @@
  * 2.0.
  */
 
-import { lazy } from 'react';
-
 import type { Location } from 'history';
 import { type Observable, debounceTime, map } from 'rxjs';
 
@@ -17,10 +15,6 @@ import { SEARCH_HOMEPAGE } from '@kbn/deeplinks-search';
 import { i18n } from '@kbn/i18n';
 
 import type { AddSolutionNavigationArg } from '@kbn/navigation-plugin/public';
-
-const LazyIconAgents = lazy(() =>
-  import('@kbn/search-shared-ui/src/v2_icons/robot').then((m) => ({ default: m.iconRobot }))
-);
 
 export interface DynamicSideNavItems {
   collections?: Array<EuiSideNavItemType<unknown>>;
@@ -57,13 +51,13 @@ function isEditingFromDashboard(
 export const getNavigationTreeDefinition = ({
   dynamicItems$,
   isCloudEnabled,
+  showAlertingV2 = false,
 }: {
   dynamicItems$: Observable<DynamicSideNavItems>;
   isCloudEnabled?: boolean;
+  showAlertingV2?: boolean;
 }): AddSolutionNavigationArg => {
   return {
-    dataTestSubj: 'searchSideNav',
-    homePage: SEARCH_HOMEPAGE,
     icon,
     id: 'es',
     navigationTree$: dynamicItems$.pipe(
@@ -79,15 +73,17 @@ export const getNavigationTreeDefinition = ({
             },
             {
               link: 'discover',
+              icon: 'productDiscover',
             },
             {
               getIsActive: ({ pathNameSerialized, prepend, location }) =>
                 pathNameSerialized.startsWith(prepend('/app/dashboards')) ||
                 isEditingFromDashboard(location, pathNameSerialized, prepend),
               link: 'dashboards',
+              icon: 'productDashboard',
             },
             {
-              icon: LazyIconAgents,
+              icon: 'productAgent',
               link: 'agent_builder',
             },
             {
@@ -149,7 +145,7 @@ export const getNavigationTreeDefinition = ({
                   ),
                 },
               ],
-              icon: 'machineLearningApp',
+              icon: 'productML',
               id: 'machine_learning',
               renderAs: 'panelOpener',
               title: i18n.translate('xpack.enterpriseSearch.searchNav.machineLearning', {
@@ -160,19 +156,7 @@ export const getNavigationTreeDefinition = ({
               children: [
                 {
                   children: [
-                    {
-                      getIsActive: ({ pathNameSerialized, prepend }) => {
-                        return (
-                          pathNameSerialized.startsWith(
-                            prepend('/app/elasticsearch/index_management/indices')
-                          ) ||
-                          pathNameSerialized.startsWith(
-                            prepend('/app/management/data/index_management')
-                          )
-                        );
-                      },
-                      link: 'management:index_management',
-                    },
+                    { link: 'management:index_management' },
                     { link: 'management:index_lifecycle_management' },
                     { link: 'management:snapshot_restore' },
                     { link: 'management:transform' },
@@ -213,7 +197,7 @@ export const getNavigationTreeDefinition = ({
           ],
           footer: [
             {
-              icon: 'launch',
+              icon: 'rocket',
               id: 'search_getting_started',
               link: 'searchGettingStarted',
             },
@@ -261,6 +245,24 @@ export const getNavigationTreeDefinition = ({
                   id: 'stack_management_home',
                   title: '',
                 },
+                ...(showAlertingV2
+                  ? [
+                      {
+                        id: 'v2_alerting_preview',
+                        title: i18n.translate(
+                          'xpack.enterpriseSearch.searchNav.management.v2AlertingPreview',
+                          {
+                            defaultMessage: 'V2 Alerting Preview',
+                          }
+                        ),
+                        renderAs: 'panelOpener' as const,
+                        children: [
+                          { link: 'management:rules' as const },
+                          { link: 'management:notification_policies' as const },
+                        ],
+                      },
+                    ]
+                  : []),
                 {
                   children: [
                     { link: 'management:triggersActionsAlerts' },
@@ -279,7 +281,13 @@ export const getNavigationTreeDefinition = ({
                   children: [
                     { link: 'management:trained_models' },
                     {
-                      link: 'searchInferenceEndpoints:inferenceEndpoints',
+                      link: 'management:inference_endpoints',
+                    },
+                    {
+                      link: 'management:model_settings',
+                    },
+                    {
+                      link: 'management:elastic_inference_service',
                     },
                     { link: 'management:anomaly_detection' },
                     { link: 'management:analytics' },
@@ -294,6 +302,7 @@ export const getNavigationTreeDefinition = ({
                 {
                   children: [
                     { link: 'management:genAiSettings' },
+                    { link: 'management:evals' },
                     { link: 'management:aiAssistantManagementSelection' },
                   ],
                   title: i18n.translate('xpack.enterpriseSearch.searchNav.management.ai', {

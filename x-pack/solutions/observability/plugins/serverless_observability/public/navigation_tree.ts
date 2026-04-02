@@ -5,32 +5,9 @@
  * 2.0.
  */
 
-import { lazy } from 'react';
 import type { NavigationTreeDefinition, NodeDefinition } from '@kbn/core-chrome-browser';
 import { i18n } from '@kbn/i18n';
 import { DATA_MANAGEMENT_NAV_ID } from '@kbn/deeplinks-management';
-
-const LazyIconBriefcase = lazy(() =>
-  import('@kbn/observability-nav-icons').then(({ iconBriefcase }) => ({ default: iconBriefcase }))
-);
-const LazyIconMl = lazy(() =>
-  import('@kbn/observability-nav-icons').then(({ iconProductMl }) => ({ default: iconProductMl }))
-);
-const LazyIconProductStreamsWired = lazy(() =>
-  import('@kbn/observability-nav-icons').then(({ iconProductStreamsWired }) => ({
-    default: iconProductStreamsWired,
-  }))
-);
-const LazyIconProductCloudInfra = lazy(() =>
-  import('@kbn/observability-nav-icons').then(({ iconProductCloudInfra }) => ({
-    default: iconProductCloudInfra,
-  }))
-);
-const LazyAgentBuilderIcon = lazy(() =>
-  import('@kbn/observability-nav-icons').then(({ iconRobot }) => ({
-    default: iconRobot,
-  }))
-);
 
 export function filterForFeatureAvailability(
   node: NodeDefinition,
@@ -47,11 +24,13 @@ export const createNavigationTree = ({
   overviewAvailable = true,
   isCasesAvailable = true,
   showAiAssistant = true,
+  showAlertingV2 = false,
 }: {
   streamsAvailable?: boolean;
   overviewAvailable?: boolean;
   isCasesAvailable?: boolean;
   showAiAssistant?: boolean;
+  showAlertingV2?: boolean;
 }): NavigationTreeDefinition => {
   return {
     body: [
@@ -71,12 +50,14 @@ export const createNavigationTree = ({
           defaultMessage: 'Discover',
         }),
         link: 'discover',
+        icon: 'productDiscover',
       },
       {
         title: i18n.translate('xpack.serverlessObservability.nav.dashboards', {
           defaultMessage: 'Dashboards',
         }),
         link: 'dashboards',
+        icon: 'productDashboard',
         getIsActive: ({ pathNameSerialized, prepend }) => {
           return pathNameSerialized.startsWith(prepend('/app/dashboards'));
         },
@@ -84,14 +65,33 @@ export const createNavigationTree = ({
       {
         link: 'workflows',
       },
-      {
-        link: 'observability-overview:alerts',
-        icon: 'warning',
-      },
+      showAlertingV2
+        ? {
+            id: 'alerting',
+            renderAs: 'panelOpener',
+            title: i18n.translate('xpack.serverlessObservability.nav.alerts', {
+              defaultMessage: 'Alerts',
+            }),
+            icon: 'warning',
+            children: [
+              {
+                link: 'observability-overview:alerts',
+              },
+              {
+                link: 'observability-overview:alerts_v2',
+              },
+            ],
+          }
+        : {
+            link: 'observability-overview:alerts',
+            icon: 'warning',
+            getIsActive: ({ pathNameSerialized, prepend }) =>
+              pathNameSerialized.startsWith(prepend('/app/observability/alerts')),
+          },
       ...filterForFeatureAvailability(
         {
           link: 'observability-overview:cases' as const,
-          icon: LazyIconBriefcase,
+          icon: 'briefcase',
           children: [
             {
               link: 'observability-overview:cases_configure' as const,
@@ -108,12 +108,12 @@ export const createNavigationTree = ({
           defaultMessage: 'SLOs',
         }),
         link: 'slo',
-        icon: 'visGauge',
+        icon: 'chartGauge',
       },
       ...filterForFeatureAvailability(
         {
           link: 'streams' as const,
-          icon: LazyIconProductStreamsWired,
+          icon: 'productStreamsWired',
         },
         streamsAvailable
       ),
@@ -182,7 +182,7 @@ export const createNavigationTree = ({
           defaultMessage: 'Infrastructure',
         }),
         renderAs: 'panelOpener',
-        icon: LazyIconProductCloudInfra,
+        icon: 'productCloudInfra',
         children: [
           {
             children: [
@@ -194,6 +194,47 @@ export const createNavigationTree = ({
               },
               { link: 'metrics:hosts' },
               { link: 'metrics:settings', sideNavStatus: 'hidden' },
+            ],
+          },
+          {
+            id: 'profiling',
+            title: i18n.translate('xpack.serverlessObservability.nav.profiling', {
+              defaultMessage: 'Profiling',
+            }),
+            children: [
+              {
+                title: i18n.translate(
+                  'xpack.serverlessObservability.navigation.stacktracesLinkLabel',
+                  {
+                    defaultMessage: 'Stacktraces',
+                  }
+                ),
+                id: 'profiling-stacktraces',
+                link: 'profiling:stacktraces',
+                breadcrumbStatus: 'hidden',
+              },
+              {
+                link: 'profiling:flamegraphs',
+                title: i18n.translate(
+                  'xpack.serverlessObservability.navigation.flameGraphsLinkLabel',
+                  {
+                    defaultMessage: 'Flamegraphs',
+                  }
+                ),
+                id: 'profiling-flamegraphs',
+                breadcrumbStatus: 'hidden',
+              },
+              {
+                link: 'profiling:functions',
+                title: i18n.translate(
+                  'xpack.serverlessObservability.navigation.functionsLinkLabel',
+                  {
+                    defaultMessage: 'Functions',
+                  }
+                ),
+                id: 'profiling-functions',
+                breadcrumbStatus: 'hidden',
+              },
             ],
           },
         ],
@@ -211,7 +252,7 @@ export const createNavigationTree = ({
       ...filterForFeatureAvailability(
         {
           link: 'agent_builder',
-          icon: LazyAgentBuilderIcon, // Temp svg until we have the icon in EUI
+          icon: 'productAgent',
         },
         !showAiAssistant
       ),
@@ -222,7 +263,7 @@ export const createNavigationTree = ({
           title: i18n.translate('xpack.serverlessObservability.nav.machineLearning', {
             defaultMessage: 'Machine Learning',
           }),
-          icon: LazyIconMl,
+          icon: 'productML',
           children: [
             {
               id: 'category-ml_overview',
@@ -367,7 +408,7 @@ export const createNavigationTree = ({
           defaultMessage: 'Add data',
         }),
         link: 'observabilityOnboarding',
-        icon: 'plusInCircle',
+        icon: 'plusCircle',
       },
       {
         id: 'devTools',
@@ -454,6 +495,24 @@ export const createNavigationTree = ({
               },
             ],
           },
+          ...filterForFeatureAvailability(
+            {
+              id: 'v2_alerting_preview',
+              title: i18n.translate(
+                'xpack.serverlessObservability.nav.projectSettings.v2AlertingPreview',
+                {
+                  defaultMessage: 'V2 Alerting Preview',
+                }
+              ),
+              renderAs: 'panelOpener' as const,
+              breadcrumbStatus: 'hidden',
+              children: [
+                { link: 'management:rules', breadcrumbStatus: 'hidden' },
+                { link: 'management:notification_policies', breadcrumbStatus: 'hidden' },
+              ],
+            },
+            showAlertingV2
+          ),
           {
             id: 'alerts_and_insights',
             title: i18n.translate(
@@ -497,6 +556,10 @@ export const createNavigationTree = ({
             children: [
               {
                 link: 'management:genAiSettings' as const,
+                breadcrumbStatus: 'hidden' as const,
+              },
+              {
+                link: 'management:evals' as const,
                 breadcrumbStatus: 'hidden' as const,
               },
               ...(showAiAssistant
