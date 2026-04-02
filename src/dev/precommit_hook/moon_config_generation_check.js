@@ -20,12 +20,10 @@ export class MoonConfigGenerationCheck extends PrecommitCheck {
   }
 
   shouldExecute({ files, deletedFiles }) {
-    return files
-      .concat(deletedFiles)
-      .some((f) => {
-        const p = f.getRelativePath();
-        return p.endsWith('moon.yml') || p.endsWith('moon.extend.yml');
-      });
+    return files.concat(deletedFiles).some((f) => {
+      const p = f.getRelativePath();
+      return p.endsWith('moon.yml') || p.endsWith('moon.extend.yml');
+    });
   }
 
   async execute(log, files, options) {
@@ -39,6 +37,9 @@ export class MoonConfigGenerationCheck extends PrecommitCheck {
       }).map(([k, v]) => [v.replace('link:', ''), k])
     );
 
+    /**
+     * This can't be done with @kbn/moon because we want to see locally changed files/projects only
+     */
     const affectedProjects = files
       .map((f) => f.getRelativePath())
       .filter((f) => f.endsWith('moon.yml') || f.endsWith('moon.extend.yml'))
