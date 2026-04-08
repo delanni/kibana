@@ -2746,6 +2746,7 @@
       "@kbn/ambient-ui-types",
       "@kbn/ambient-common-types",
       "@kbn/ambient-storybook-types"
-    ]
+    ],
+    "ignoreDeprecations": "6.0"
   }
 }

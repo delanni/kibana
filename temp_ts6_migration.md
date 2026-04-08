@@ -11,8 +11,11 @@
 - `.buildkite/package.json` devDependencies (`typescript`)
 
 ## 2. Add ignoreDeprecations escape hatch
-- [ ] Add `"ignoreDeprecations": "6.0"` to `tsconfig.base.json`
-- [ ] Run initial type check to see baseline errors
+- [x] Add `"ignoreDeprecations": "6.0"` to `tsconfig.base.json`
+- [x] Run initial type check to see baseline errors
+
+**Notes:** Single-project type check passes cleanly with the escape hatch.
+All deprecated options (`baseUrl`, `moduleResolution: "node"`, `downlevelIteration`) are silenced.
 
 ## 3. Remove baseUrl
 - [ ] Remove `baseUrl` from `tsconfig.base.json` (paths are already repo-root-relative)
