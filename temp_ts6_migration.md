@@ -18,8 +18,17 @@
 All deprecated options (`baseUrl`, `moduleResolution: "node"`, `downlevelIteration`) are silenced.
 
 ## 3. Remove baseUrl
-- [ ] Remove `baseUrl` from `tsconfig.base.json` (paths are already repo-root-relative)
-- [ ] Remove `baseUrl` from any other tsconfig files that set it
+- [x] Remove `baseUrl` from `tsconfig.base.json`
+- [x] Remove `baseUrl` from `tsconfig.base.type_check.json`
+- [x] Remove `baseUrl` from `src/core/packages/chrome/navigation/packaging/example/tsconfig.json`
+- [x] Remove `baseUrl` from `src/core/packages/chrome/navigation/packaging/example/tsconfig.type_check.json`
+- [x] Prefix all ~2700 path values with `./` (required when `baseUrl` is not set)
+- [x] Update path generator in `src/dev/kbn_pm/src/commands/bootstrap/regenerate_base_tsconfig.mjs`
+- [x] Fix 3 missed non-relative paths (multiline `node_modules/` entries + `typings/` entry)
+
+**Notes:** TS6 requires `paths` values to be relative (start with `./`) when `baseUrl` is not set.
+Since `baseUrl` was `"."`, prefixing all values with `./` is semantically identical.
+The path generator also needed updating so `yarn kbn bootstrap` produces correct paths.
 
 ## 4. Change moduleResolution from "node" to "bundler"
 - [ ] `tsconfig.base.json`
