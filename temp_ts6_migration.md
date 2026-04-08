@@ -64,8 +64,12 @@ Setting `false` explicitly preserves the 5.9 behavior. This could be revisited l
 by adding `.d.ts` declarations for CSS modules, but that's a broader effort.
 
 ## 8. Fix .buildkite/tsconfig.test.json
-- [ ] Add `"types": ["node"]` since types now defaults to `[]`
-- [ ] moduleResolution already handled in step 4
+- [x] Add `"types": ["node", "jest"]` since types now defaults to `[]`
+- [x] moduleResolution already handled in step 4
+
+**Notes:** This is a standalone tsconfig (does not extend the base), so it needs its own
+`types` array. Added both `node` and `jest` since the tests use both Node.js globals
+and Jest test APIs.
 
 ## 9. Remove ignoreDeprecations
 - [ ] Remove `"ignoreDeprecations": "6.0"` from `tsconfig.base.json`

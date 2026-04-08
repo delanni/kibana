@@ -5,7 +5,8 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "noEmit": true,
-    "lib": ["es2020"]
+    "lib": ["es2020"],
+    "types": ["node", "jest"]
   },
   "include": ["src/**/*.test.ts"]
 }
