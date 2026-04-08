@@ -48,7 +48,12 @@ Removed stale comment about Node.js require() behavior from tsconfig.base.json.
 at all (even to `false`). Removed along with the stale ES5/ES3 comment.
 
 ## 6. Fix target: es5 in tsconfig.browser.json
-- [ ] Change `target` from `"es5"` to `"es2015"` or higher
+- [x] Change `target` from `"es5"` to `"es2015"`
+
+**Notes:** ES5 target is deprecated in TS6; lowest supported is now ES2015.
+Kibana uses webpack + babel for actual browser transpilation, so this config
+was only used for type-checking. `es2015` is the conservative choice; the
+base config already uses `"esnext"` for everything else.
 
 ## 7. Handle noUncheckedSideEffectImports
 - [ ] Decide: set `false` in base config, or add module declarations for CSS/SCSS
