@@ -42,7 +42,10 @@ handles `exports` fields in package.json and is the recommended modern replaceme
 Removed stale comment about Node.js require() behavior from tsconfig.base.json.
 
 ## 5. Remove downlevelIteration
-- [ ] Remove `downlevelIteration` from `tsconfig.base.json` (no-op with esnext target)
+- [x] Remove `downlevelIteration` from `tsconfig.base.json` (no-op with esnext target)
+
+**Notes:** Was already a no-op since target is `"esnext"`. TS6 deprecates setting this option
+at all (even to `false`). Removed along with the stale ES5/ES3 comment.
 
 ## 6. Fix target: es5 in tsconfig.browser.json
 - [ ] Change `target` from `"es5"` to `"es2015"` or higher
