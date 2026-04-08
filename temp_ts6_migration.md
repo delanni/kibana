@@ -37,9 +37,12 @@ The path generator also needed updating so `yarn kbn bootstrap` produces correct
 - [x] `.buildkite/tsconfig.test.json`
 
 **Notes:** TS6 supports `module: "commonjs"` + `moduleResolution: "bundler"`, which is the
-correct migration path for Kibana. Single-project type check passes. The `bundler` resolution
-handles `exports` fields in package.json and is the recommended modern replacement for `node`/`node10`.
+correct migration path for Kibana. The `bundler` resolution handles `exports` fields in
+package.json and is the recommended modern replacement for `node`/`node10`.
 Removed stale comment about Node.js require() behavior from tsconfig.base.json.
+Also removed typings proxies for `@elastic/opentelemetry-node/sdk` and
+`@opentelemetry/semantic-conventions/incubating` -- these were workarounds for `node`
+resolution not supporting `exports`, which `bundler` handles natively.
 
 ## 5. Remove downlevelIteration
 - [x] Remove `downlevelIteration` from `tsconfig.base.json` (no-op with esnext target)
@@ -72,7 +75,14 @@ by adding `.d.ts` declarations for CSS modules, but that's a broader effort.
 and Jest test APIs.
 
 ## 9. Remove ignoreDeprecations
-- [ ] Remove `"ignoreDeprecations": "6.0"` from `tsconfig.base.json`
+- [x] Remove `"ignoreDeprecations": "6.0"` from `tsconfig.base.json`
+- [x] Remove typings proxies that are no longer needed with `bundler` resolution
+
+**Notes:** After removing the escape hatch, discovered that the otel typings proxies
+(paths overrides in `tsconfig.base.json`) were interfering with `bundler` resolution.
+These proxies existed because `moduleResolution: "node"` didn't support `exports` in
+package.json. Now that `bundler` reads `exports` natively, the proxies were actually
+*shadowing* the real types. Removing them fixed 11 type errors.
 
 ## 10. Full validation
 - [ ] Run `node scripts/type_check`

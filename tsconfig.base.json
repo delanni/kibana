@@ -2653,12 +2653,8 @@
       "@elastic/kibana-d3-color": ["./node_modules/@types/d3-color"],
       // Allows for importing from `kibana` package for the exported types.
       "@emotion/core": ["./typings/@emotion"],
-      // We need the custom typings "proxy" because our current import-resolver doesn't support "exports" in package.json.
-      // We should be able to remove this once we support cjs/esm interop.
-      "@elastic/opentelemetry-node/sdk": ["./typings/@elastic/opentelemetry-node/sdk"],
-      "@opentelemetry/semantic-conventions/incubating": [
-        "./typings/@opentelemetry/semantic-conventions/incubating"
-      ],
+      // These typings proxies are no longer needed with moduleResolution: "bundler" which supports exports
+      // "@elastic/opentelemetry-node/sdk" and "@opentelemetry/semantic-conventions/incubating" resolve via exports
       "@typescript-eslint/parser": ["./typings/@typescript-eslint/parser"],
       "@a2a-js/sdk/server": ["./typings/@a2a-js-sdk/server"],
       "vega-lite": ["./typings/vega/vega_lite"],
@@ -2743,7 +2739,6 @@
       "@kbn/ambient-ui-types",
       "@kbn/ambient-common-types",
       "@kbn/ambient-storybook-types"
-    ],
-    "ignoreDeprecations": "6.0"
+    ]
   }
 }
