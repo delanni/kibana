@@ -4,7 +4,7 @@
     "outDir": "target/types",
     "noEmit": true,
     "jsx": "react",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,

@@ -2718,9 +2718,7 @@
     "allowJs": true,
     // Emits __importStar and __importDefault helpers for runtime babel ecosystem compatibility.
     "esModuleInterop": true,
-    // Resolve modules in the same way as Node.js. Aka make `require` works the
-    // same in TypeScript as it does in Node.js.
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     // "resolveJsonModule" allows for importing, extracting types from and generating .json files.
     "resolveJsonModule": true,
     // Disallow inconsistently-cased references to the same file.

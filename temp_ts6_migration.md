@@ -31,10 +31,15 @@ Since `baseUrl` was `"."`, prefixing all values with `./` is semantically identi
 The path generator also needed updating so `yarn kbn bootstrap` produces correct paths.
 
 ## 4. Change moduleResolution from "node" to "bundler"
-- [ ] `tsconfig.base.json`
-- [ ] `packages/kbn-dependency-usage/tsconfig.json`
-- [ ] `src/core/packages/chrome/navigation/packaging/tsconfig.json`
-- [ ] `.buildkite/tsconfig.test.json`
+- [x] `tsconfig.base.json`
+- [x] `packages/kbn-dependency-usage/tsconfig.json`
+- [x] `src/core/packages/chrome/navigation/packaging/tsconfig.json`
+- [x] `.buildkite/tsconfig.test.json`
+
+**Notes:** TS6 supports `module: "commonjs"` + `moduleResolution: "bundler"`, which is the
+correct migration path for Kibana. Single-project type check passes. The `bundler` resolution
+handles `exports` fields in package.json and is the recommended modern replacement for `node`/`node10`.
+Removed stale comment about Node.js require() behavior from tsconfig.base.json.
 
 ## 5. Remove downlevelIteration
 - [ ] Remove `downlevelIteration` from `tsconfig.base.json` (no-op with esnext target)
