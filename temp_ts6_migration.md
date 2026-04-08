@@ -56,8 +56,12 @@ was only used for type-checking. `es2015` is the conservative choice; the
 base config already uses `"esnext"` for everything else.
 
 ## 7. Handle noUncheckedSideEffectImports
-- [ ] Decide: set `false` in base config, or add module declarations for CSS/SCSS
-- [ ] ~28 files with CSS/SCSS/SVG side-effect imports affected
+- [x] Set `"noUncheckedSideEffectImports": false` in `tsconfig.base.json`
+
+**Notes:** TS6 defaults this to `true`, which would error on ~28 CSS/SCSS/SVG side-effect
+imports that are handled by webpack at runtime and have no TS module declarations.
+Setting `false` explicitly preserves the 5.9 behavior. This could be revisited later
+by adding `.d.ts` declarations for CSS modules, but that's a broader effort.
 
 ## 8. Fix .buildkite/tsconfig.test.json
 - [ ] Add `"types": ["node"]` since types now defaults to `[]`

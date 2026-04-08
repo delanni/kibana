@@ -2719,6 +2719,8 @@
     // Emits __importStar and __importDefault helpers for runtime babel ecosystem compatibility.
     "esModuleInterop": true,
     "moduleResolution": "bundler",
+    // TS6 defaults this to true, but Kibana has ~28 CSS/SCSS side-effect imports handled by bundlers
+    "noUncheckedSideEffectImports": false,
     // "resolveJsonModule" allows for importing, extracting types from and generating .json files.
     "resolveJsonModule": true,
     // Disallow inconsistently-cased references to the same file.
