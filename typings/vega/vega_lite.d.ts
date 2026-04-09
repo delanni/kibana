@@ -7,6 +7,6 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-declare module 'vega-lite' {
-  export * from 'vega-lite/build';
-}
+// With moduleResolution: "bundler", vega-lite resolves correctly via its package exports.
+// The previous `declare module 'vega-lite' { export * from 'vega-lite/build' }` is no
+// longer needed and would fail because 'vega-lite/build' is not a public export subpath.

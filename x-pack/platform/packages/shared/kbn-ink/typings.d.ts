@@ -5,6 +5,6 @@
  * 2.0.
  */
 
-declare module 'ink' {
-  export * from 'ink/build';
-}
+// With moduleResolution: "bundler", ink resolves correctly via its package exports.
+// The previous `declare module 'ink' { export * from 'ink/build' }` is no longer
+// needed and would fail because 'ink/build' is not a public export subpath.

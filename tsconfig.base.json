@@ -2675,9 +2675,8 @@
       "@arizeai/phoenix-client/dist/esm/types/datasets": ["./node_modules/@arizeai/phoenix-client/dist/esm/types/datasets.d.ts"],
       "@arizeai/phoenix-client/dist/esm/types/experiments": ["./node_modules/@arizeai/phoenix-client/dist/esm/types/experiments.d.ts"],
       "@typescript-eslint/parser": ["./typings/@typescript-eslint/parser"],
-      "@a2a-js/sdk/server": ["./typings/@a2a-js-sdk/server"],
-      "vega-lite": ["./typings/vega/vega_lite"],
-      "vega-tooltip": ["./typings/vega/vega_tooltip"],
+      // @a2a-js/sdk/server path mapping removed — bundler resolves via package exports
+      // vega-lite and vega-tooltip path mappings removed — bundler resolves via package exports
       "zod": ["./node_modules/zod/v4/index.d.ts"],
       "zod/v4": ["./node_modules/zod/v4/index.d.ts"],
       "zod/v4/core": ["./node_modules/zod/v4/core/index.d.ts"],

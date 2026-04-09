@@ -7,6 +7,7 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-declare module '@elastic/opentelemetry-node/sdk' {
-  export * from '@elastic/opentelemetry-node/types/sdk';
-}
+// With moduleResolution: "bundler", @elastic/opentelemetry-node/sdk resolves correctly
+// via its package exports (./sdk → ./types/sdk.d.ts). The previous declare module
+// augmentation re-exported from '@elastic/opentelemetry-node/types/sdk' which is not
+// a public export subpath.

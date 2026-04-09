@@ -7,6 +7,6 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-declare module '@opentelemetry/semantic-conventions/incubating' {
-  export * from '@opentelemetry/semantic-conventions/build/src/index-incubating';
-}
+// With moduleResolution: "bundler", @opentelemetry/semantic-conventions/incubating
+// resolves correctly via its package exports. The previous declare module augmentation
+// re-exported from a deep internal path that is not a public export subpath.

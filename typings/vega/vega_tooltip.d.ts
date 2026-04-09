@@ -7,6 +7,6 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-declare module 'vega-tooltip' {
-  export * from 'vega-tooltip/build';
-}
+// With moduleResolution: "bundler", vega-tooltip resolves correctly via its package exports.
+// The previous `declare module 'vega-tooltip' { export * from 'vega-tooltip/build' }` is no
+// longer needed and would fail because 'vega-tooltip/build' is not a public export subpath.
