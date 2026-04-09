@@ -174,7 +174,10 @@ export class InferenceChatModel extends BaseChatModel<InferenceChatModelCallOpti
     };
   }
 
-  override bindTools(tools: BindToolsInput[], kwargs?: Partial<InferenceChatModelCallOptions>) {
+  override bindTools(
+    tools: BindToolsInput[],
+    kwargs?: Partial<InferenceChatModelCallOptions>
+  ): Runnable<BaseLanguageModelInput, AIMessageChunk, InferenceChatModelCallOptions> {
     // conversion will be done at call time for simplicity's sake
     // so we just need to implement this method with the default behavior to support tools
     return this.withConfig({

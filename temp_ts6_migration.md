@@ -84,6 +84,18 @@ These proxies existed because `moduleResolution: "node"` didn't support `exports
 package.json. Now that `bundler` reads `exports` natively, the proxies were actually
 *shadowing* the real types. Removing them fixed 11 type errors.
 
-## 10. Full validation
+## 10. Fix TS2883 declaration emit errors
+- [x] Add path mappings to force ESM `.d.ts` types for `axios` and `@langchain/core` subpaths
+- [x] Add explicit return type to `bindTools` in `inference_chat_model.ts` (langchain)
+- [x] Add explicit return types and `SearchHit` import in `kbn-performance-testing-dataset-extractor/es_client.ts`
+- [x] Add explicit return types in cypress `fleet.ts` and `artifacts.ts`
+
+**Notes:** With `module: "commonjs"` + `moduleResolution: "bundler"`, TS resolves the `require`
+condition in package.json `exports`, which points to `.d.cts` types. During composite declaration
+emit, types from `.cjs` files can't be portably referenced in `.d.ts` output (TS2883).
+Fixed 260/269 errors via path mappings (forces `.d.ts` resolution); remaining 9 fixed with
+explicit return type annotations. Error count dropped from 392 → ~110.
+
+## 11. Full validation
 - [ ] Run `node scripts/type_check`
 - [ ] Run `node scripts/check_changes.ts`

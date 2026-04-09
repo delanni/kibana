@@ -11,6 +11,7 @@ import { Client, HttpConnection } from 'elasticsearch-8.x'; // Switch to `@elast
 import type {
   QueryDslQueryContainer,
   SearchRequest,
+  SearchHit,
   MsearchRequestItem,
 } from 'elasticsearch-8.x/lib/api/types'; // Switch to `@elastic/elasticsearch` when the CI cluster is upgraded.
 import type { ToolingLog } from '@kbn/tooling-log';
@@ -118,7 +119,7 @@ export class ESClient {
     this.log = log;
   }
 
-  async getTransactions<T>(queryFilters: QueryDslQueryContainer[]) {
+  async getTransactions<T>(queryFilters: QueryDslQueryContainer[]): Promise<SearchHit<T>[]> {
     const searchRequest: SearchRequest = {
       index: this.tracesIndex,
       sort: [
@@ -149,7 +150,10 @@ export class ESClient {
     return result?.hits?.hits;
   }
 
-  async getFtrServiceTransactions(buildId: string, journeyName: string) {
+  async getFtrServiceTransactions(
+    buildId: string,
+    journeyName: string
+  ): Promise<SearchHit<Document>[]> {
     const filters = [
       { field: 'service.name', value: 'functional test runner' },
       { field: 'processor.event', value: 'transaction' },
@@ -165,7 +169,7 @@ export class ESClient {
     buildId: string,
     journeyName: string,
     range?: { startTime: string; endTime: string }
-  ) {
+  ): Promise<SearchHit<TransactionDocument>[]> {
     const filters = [
       { field: 'transaction.type', value: 'request' },
       { field: 'processor.event', value: 'transaction' },
@@ -195,7 +199,7 @@ export class ESClient {
     };
   };
 
-  async getSpans(transactionIds: string[]) {
+  async getSpans(transactionIds: string[]): Promise<SearchHit<SpanDocument>[]> {
     const searches = new Array<MsearchRequestItem>();
 
     for (const transactionId of transactionIds) {
