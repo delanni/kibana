@@ -28,14 +28,18 @@ import { manuallyCountPromptTokens, manuallyCountCompletionTokens } from './manu
  *
  * @param request the OpenAI request that was sent to the connector.
  */
-export function emitTokenCountEstimateIfMissing<
-  T extends ChatCompletionChunkEvent | ChatCompletionTokenCountEvent
->({ request }: { request: OpenAIRequest }): OperatorFunction<T, T | ChatCompletionTokenCountEvent> {
+type ChatCompletionEvent = ChatCompletionChunkEvent | ChatCompletionTokenCountEvent;
+
+export function emitTokenCountEstimateIfMissing({
+  request,
+}: {
+  request: OpenAIRequest;
+}): OperatorFunction<ChatCompletionEvent, ChatCompletionEvent> {
   return (source$) => {
     let tokenCountEmitted = false;
     const chunks: ChatCompletionChunkEvent[] = [];
 
-    return new Observable<T | ChatCompletionTokenCountEvent>((subscriber) => {
+    return new Observable<ChatCompletionEvent>((subscriber) => {
       return source$.subscribe({
         next: (value) => {
           if (isChatCompletionTokenCountEvent(value)) {

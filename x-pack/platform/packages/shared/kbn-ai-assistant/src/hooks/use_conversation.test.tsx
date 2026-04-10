@@ -173,6 +173,8 @@ describe('useConversation', () => {
       mockService.callApi.mockResolvedValueOnce({
         conversation: {
           id: 'my-conversation-id',
+          title: '',
+          last_updated: new Date().toISOString(),
         },
         systemMessage: 'System',
         messages: [
@@ -184,7 +186,7 @@ describe('useConversation', () => {
             },
           },
         ],
-      });
+      } as any);
 
       // @ts-expect-error upgrade typescript v5.9.3
       hookResult = renderHook(useConversation, {
@@ -425,7 +427,7 @@ describe('useConversation', () => {
     describe('with a stored conversation', () => {
       let resolve: (value: unknown) => void;
       beforeEach(async () => {
-        mockService.callApi.mockImplementation(async (endpoint, request) => {
+        mockService.callApi.mockImplementation(async (endpoint, request): Promise<any> => {
           if (
             endpoint === 'PUT /internal/observability_ai_assistant/conversation/{conversationId}'
           ) {
@@ -441,6 +443,7 @@ describe('useConversation', () => {
             },
             labels: {},
             numeric_labels: {},
+            namespace: 'default',
             public: false,
             messages: [],
           };
@@ -496,7 +499,7 @@ describe('useConversation', () => {
           },
         ]);
 
-        mockService.callApi.mockImplementation(async (endpoint, request) => {
+        mockService.callApi.mockImplementation(async (endpoint, request): Promise<any> => {
           return {
             '@timestamp': new Date().toISOString(),
             conversation: {
@@ -505,6 +508,7 @@ describe('useConversation', () => {
             },
             labels: {},
             numeric_labels: {},
+            namespace: 'default',
             public: false,
             messages: [],
           };

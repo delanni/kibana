@@ -8,8 +8,6 @@
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from '@kbn/zod/v4';
 import type { ElasticsearchClient } from '@kbn/core/server';
-import type { CallbackManagerForToolRun } from '@langchain/core/callbacks/manager';
-import type { ToolRunnableConfig } from '@langchain/core/tools';
 import type { estypes } from '@elastic/elasticsearch';
 
 import { BOILERPLATE_PIPELINE } from './pipeline_constants';
@@ -113,11 +111,7 @@ export function testPipelineTool(options: TestPipelineToolOptions): DynamicStruc
       'Primary workflow: build step-by-step with modify_pipeline (use its TOC for feedback), ' +
       'then validate_pipeline when the pipeline is ready.',
     schema,
-    func: async (
-      input: z.infer<typeof schema>,
-      _runManager?: CallbackManagerForToolRun,
-      _config?: ToolRunnableConfig
-    ) => {
+    func: async (input: z.infer<typeof schema>, _runManager, _config) => {
       const { processors: testProcessors, errors_only: errorsOnly, verbose } = input;
 
       if (!samples || samples.length === 0) {

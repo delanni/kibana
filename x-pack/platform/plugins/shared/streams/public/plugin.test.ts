@@ -186,10 +186,13 @@ describe('Streams Plugin', () => {
     });
 
     it('should create new AbortController for each call', async () => {
-      mockRepositoryClient.fetch.mockResolvedValue({
-        enabled: true,
+      const mockStatus = {
+        logs: true,
+        'logs.otel': true,
+        'logs.ecs': true,
         can_manage: true,
-      });
+      };
+      mockRepositoryClient.fetch.mockResolvedValue(mockStatus);
 
       await getWiredStatus();
       await getWiredStatus();

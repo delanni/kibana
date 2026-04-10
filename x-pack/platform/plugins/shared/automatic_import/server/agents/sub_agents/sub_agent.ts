@@ -232,11 +232,12 @@ export const createTaskTool = (params: TaskToolParams) => {
   const { subagents, model, samples, recursionLimit } = params;
   const agentsMap = new Map<string, AutomaticImportSubAgent>();
   for (const subagent of subagents) {
+    type ReactAgentParams = Parameters<typeof createReactAgent>[0];
     const baseSubAgent = createReactAgent({
-      llm: model,
+      llm: model as unknown as ReactAgentParams['llm'],
       tools: subagent.tools || [],
       prompt: subagent.prompt,
-      stateSchema: AutomaticImportAgentState,
+      stateSchema: AutomaticImportAgentState as unknown as ReactAgentParams['stateSchema'],
     });
     const ReActSubAgent =
       recursionLimit != null ? baseSubAgent.withConfig({ recursionLimit }) : baseSubAgent;

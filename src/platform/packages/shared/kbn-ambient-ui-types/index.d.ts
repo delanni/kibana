@@ -68,3 +68,18 @@ declare module '*?raw' {
   // eslint-disable-next-line import/no-default-export
   export default string;
 }
+
+// canvg ships types at lib/index.d.ts but its exports field lacks a `types`
+// condition, so bundler module resolution can't find them.
+declare module 'canvg' {
+  // eslint-disable-next-line import/no-default-export
+  export default class Canvg {
+    static fromString(ctx: CanvasRenderingContext2D, svg: string, options?: any): Canvg;
+    static from(ctx: CanvasRenderingContext2D, url: string, options?: any): Promise<Canvg>;
+    render(options?: any): Promise<void>;
+    start(options?: any): void;
+    stop(): void;
+    resize(width: number, height?: number, preserveAspectRatio?: boolean | string): void;
+  }
+  export { Canvg };
+}

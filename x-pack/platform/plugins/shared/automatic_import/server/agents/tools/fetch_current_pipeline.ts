@@ -5,9 +5,7 @@
  * 2.0.
  */
 
-import type { CallbackManagerForToolRun } from '@langchain/core/callbacks/manager';
 import { ToolMessage } from '@langchain/core/messages';
-import type { ToolRunnableConfig } from '@langchain/core/tools';
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { Command, getCurrentTaskInput } from '@langchain/langgraph';
 import { z } from '@kbn/zod/v4';
@@ -39,11 +37,7 @@ export function fetchCurrentPipelineTool(): DynamicStructuredTool {
       'the pipeline table of contents is already returned after every modify_pipeline call. ' +
       'Do NOT call this on review iterations when the full pipeline is already injected in your context.',
     schema,
-    func: async (
-      input: z.infer<typeof schema>,
-      _runManager?: CallbackManagerForToolRun,
-      config?: ToolRunnableConfig
-    ) => {
+    func: async (input: z.infer<typeof schema>, _runManager, config) => {
       const state = getCurrentTaskInput<AutomaticImportAgentStateType>();
       const currentPipeline = state.current_pipeline ?? {};
       const processors = (currentPipeline as Record<string, unknown>).processors;
@@ -58,7 +52,8 @@ export function fetchCurrentPipelineTool(): DynamicStructuredTool {
                   has_pipeline: false,
                   message: 'No current pipeline available in state.',
                 }),
-                tool_call_id: config?.toolCall?.id ?? '',
+                tool_call_id:
+                  (config as { toolCall?: { id?: string } } | undefined)?.toolCall?.id ?? '',
               }),
             ],
           },
@@ -91,7 +86,8 @@ export function fetchCurrentPipelineTool(): DynamicStructuredTool {
           messages: [
             new ToolMessage({
               content: JSON.stringify(result),
-              tool_call_id: config?.toolCall?.id ?? '',
+              tool_call_id:
+                (config as { toolCall?: { id?: string } } | undefined)?.toolCall?.id ?? '',
             }),
           ],
         },

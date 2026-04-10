@@ -53,7 +53,8 @@ export class KibanaPhoenixClient implements EvalsExecutorClient {
   }
 
   private async syncDataSet(dataset: EvaluationDataset): Promise<{ datasetId: string }> {
-    const datasets = await import('@arizeai/phoenix-client/datasets');
+    const datasetsModule = await import('@arizeai/phoenix-client/datasets');
+    const datasets = 'default' in datasetsModule ? (datasetsModule as any).default : datasetsModule;
 
     const getDatasetsByNameResponse = await this.phoenixClient.GET('/v1/datasets', {
       params: {
@@ -189,7 +190,9 @@ export class KibanaPhoenixClient implements EvalsExecutorClient {
         ? (await this.getDatasetByName(dataset.name)).id
         : (await this.syncDataSet(dataset)).datasetId;
 
-      const experiments = await import('@arizeai/phoenix-client/experiments');
+      const experimentsModule = await import('@arizeai/phoenix-client/experiments');
+      const experiments =
+        'default' in experimentsModule ? (experimentsModule as any).default : experimentsModule;
 
       const ran = await experiments.runExperiment({
         client: this.phoenixClient,

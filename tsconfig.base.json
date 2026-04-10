@@ -2674,6 +2674,8 @@
       "ink/build": ["./node_modules/ink/build/index.d.ts"],
       "@arizeai/phoenix-client/dist/esm/types/datasets": ["./node_modules/@arizeai/phoenix-client/dist/esm/types/datasets.d.ts"],
       "@arizeai/phoenix-client/dist/esm/types/experiments": ["./node_modules/@arizeai/phoenix-client/dist/esm/types/experiments.d.ts"],
+      "@arizeai/phoenix-client/datasets": ["./node_modules/@arizeai/phoenix-client/dist/esm/datasets/index.d.ts"],
+      "@arizeai/phoenix-client/experiments": ["./node_modules/@arizeai/phoenix-client/dist/esm/experiments/index.d.ts"],
       "@typescript-eslint/parser": ["./typings/@typescript-eslint/parser"],
       // @a2a-js/sdk/server path mapping removed — bundler resolves via package exports
       // vega-lite and vega-tooltip path mappings removed — bundler resolves via package exports

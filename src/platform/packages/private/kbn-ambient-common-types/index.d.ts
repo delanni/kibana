@@ -61,3 +61,37 @@ declare module '*.yml' {
   // eslint-disable-next-line import/no-default-export
   export default content;
 }
+
+// node-diff3 ships types at index.d.ts but its exports field lacks a `types`
+// condition for the `require` path, so bundler module resolution can't find them.
+declare module 'node-diff3' {
+  interface MergeResult {
+    conflict: boolean;
+    result: string[];
+  }
+  interface IMergeOptions {
+    excludeFalseConflicts?: boolean;
+    stringSeparator?: string | RegExp;
+  }
+  export function merge<T = string>(
+    a: string | T[],
+    o: string | T[],
+    b: string | T[],
+    options?: IMergeOptions
+  ): MergeResult;
+  export function diff3Merge<T>(
+    a: string | T[],
+    o: string | T[],
+    b: string | T[],
+    options?: IMergeOptions
+  ): any[];
+  export function mergeDiff3<T>(
+    a: string | T[],
+    o: string | T[],
+    b: string | T[],
+    options?: IMergeOptions & { label?: { a?: string; o?: string; b?: string } }
+  ): MergeResult;
+  export function diffComm<T>(buffer1: T[], buffer2: T[]): any[];
+  export function diffPatch<T>(buffer1: T[], buffer2: T[]): any[];
+  export function patch<T>(buffer: T[], patchResult: any[]): T[];
+}

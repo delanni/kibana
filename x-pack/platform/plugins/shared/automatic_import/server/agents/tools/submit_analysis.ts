@@ -5,12 +5,10 @@
  * 2.0.
  */
 
-import type { ToolRunnableConfig } from '@langchain/core/tools';
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { Command } from '@langchain/langgraph';
 import { ToolMessage } from '@langchain/core/messages';
 import { z } from '@kbn/zod/v4';
-import type { CallbackManagerForToolRun } from '@langchain/core/callbacks/manager';
 
 interface CreateSubmitToolConfig {
   name: string;
@@ -31,18 +29,15 @@ export const createSubmitTool = (config: CreateSubmitToolConfig): DynamicStructu
     name: config.name,
     description: config.description,
     schema,
-    func: async (
-      input: z.infer<typeof schema>,
-      _runManager?: CallbackManagerForToolRun,
-      toolConfig?: ToolRunnableConfig
-    ) => {
+    func: async (input: z.infer<typeof schema>, _runManager, toolConfig) => {
       return new Command({
         update: {
           [config.stateField]: input.content,
           messages: [
             new ToolMessage({
               content: `${config.contentLabel} stored. Summary: ${input.summary}`,
-              tool_call_id: toolConfig?.toolCall?.id ?? '',
+              tool_call_id:
+                (toolConfig as { toolCall?: { id?: string } } | undefined)?.toolCall?.id ?? '',
             }),
           ],
         },

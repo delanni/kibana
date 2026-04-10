@@ -5,13 +5,11 @@
  * 2.0.
  */
 
-import type { ToolRunnableConfig } from '@langchain/core/tools';
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { Command, getCurrentTaskInput } from '@langchain/langgraph';
 import { ToolMessage } from '@langchain/core/messages';
 import { z } from '@kbn/zod/v4';
 import type { ElasticsearchClient } from '@kbn/core/server';
-import type { CallbackManagerForToolRun } from '@langchain/core/callbacks/manager';
 import type { estypes } from '@elastic/elasticsearch';
 import type { IFieldsMetadataClient } from '@kbn/fields-metadata-plugin/server';
 import type { AutomaticImportAgentStateType } from '../state';
@@ -187,12 +185,8 @@ export function ingestPipelineValidatorTool(options: ValidatorToolOptions): Dyna
       'Persists the pipeline and validation results to shared state. ' +
       'Call this as your final step after building the pipeline with modify_pipeline.',
     schema: validatorSchema,
-    func: async (
-      _input: z.infer<typeof validatorSchema>,
-      _runManager?: CallbackManagerForToolRun,
-      config?: ToolRunnableConfig
-    ) => {
-      const toolCallId = config?.toolCall?.id ?? '';
+    func: async (_input: z.infer<typeof validatorSchema>, _runManager, config) => {
+      const toolCallId = (config as { toolCall?: { id?: string } } | undefined)?.toolCall?.id ?? '';
       const state = getCurrentTaskInput<AutomaticImportAgentStateType>();
       const currentPipeline = state.current_pipeline;
 

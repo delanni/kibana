@@ -46,12 +46,13 @@ export type CustomEvaluator = (
 export const getCustomEvaluator =
   ({ criteria, key, llm, template }: GetCustomEvaluatorOptions): CustomEvaluator =>
   async (rootRun, example) => {
+    type EvalOptions = NonNullable<Parameters<typeof loadEvaluator>[1]>;
     const chain = await loadEvaluator('labeled_criteria', {
       criteria,
       chainOptions: {
         prompt: PromptTemplate.fromTemplate(template),
-      },
-      llm,
+      } as unknown as EvalOptions['chainOptions'],
+      llm: llm as unknown as EvalOptions['llm'],
     });
 
     const exampleAttackDiscoveriesWithReplacements =

@@ -5,12 +5,10 @@
  * 2.0.
  */
 
-import type { ToolRunnableConfig } from '@langchain/core/tools';
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { Command } from '@langchain/langgraph';
 import { ToolMessage } from '@langchain/core/messages';
 import { z } from '@kbn/zod/v4';
-import type { CallbackManagerForToolRun } from '@langchain/core/callbacks/manager';
 import { FIELD_MAPPING_TYPES } from '../state';
 
 const fieldMappingSchema = z.object({
@@ -53,11 +51,7 @@ export const submitReviewTool = (): DynamicStructuredTool => {
       'field_mappings for all custom-namespaced fields. ' +
       'You MUST call this as your final action after completing your review.',
     schema,
-    func: async (
-      input: z.infer<typeof schema>,
-      _runManager?: CallbackManagerForToolRun,
-      toolConfig?: ToolRunnableConfig
-    ) => {
+    func: async (input: z.infer<typeof schema>, _runManager, toolConfig) => {
       const update: Record<string, unknown> = {
         review: input.content,
       };
@@ -72,7 +66,8 @@ export const submitReviewTool = (): DynamicStructuredTool => {
           messages: [
             new ToolMessage({
               content: `Review stored. Summary: ${input.summary}`,
-              tool_call_id: toolConfig?.toolCall?.id ?? '',
+              tool_call_id:
+                (toolConfig as { toolCall?: { id?: string } } | undefined)?.toolCall?.id ?? '',
             }),
           ],
         },

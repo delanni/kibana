@@ -5,12 +5,10 @@
  * 2.0.
  */
 
-import type { ToolRunnableConfig } from '@langchain/core/tools';
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { Command, getCurrentTaskInput } from '@langchain/langgraph';
 import { ToolMessage } from '@langchain/core/messages';
 import { z } from '@kbn/zod/v4';
-import type { CallbackManagerForToolRun } from '@langchain/core/callbacks/manager';
 import type { ElasticsearchClient } from '@kbn/core/server';
 import type { estypes } from '@elastic/elasticsearch';
 
@@ -215,11 +213,7 @@ export function modifyPipelineTool(options: ModifyPipelineToolOptions): DynamicS
       'Also returns a compact list of custom processors (after boilerplate). ' +
       'The pipeline is automatically initialized with boilerplate processors (ecs.version, message->event.original, on_failure) if empty.',
     schema,
-    func: async (
-      input: z.infer<typeof schema>,
-      _runManager?: CallbackManagerForToolRun,
-      config?: ToolRunnableConfig
-    ) => {
+    func: async (input: z.infer<typeof schema>, _runManager, config) => {
       const state = getCurrentTaskInput<AutomaticImportAgentStateType>();
       let currentPipeline = state.current_pipeline;
 
@@ -280,7 +274,8 @@ export function modifyPipelineTool(options: ModifyPipelineToolOptions): DynamicS
           messages: [
             new ToolMessage({
               content: response,
-              tool_call_id: config?.toolCall?.id ?? '',
+              tool_call_id:
+                (config as { toolCall?: { id?: string } } | undefined)?.toolCall?.id ?? '',
             }),
           ],
         },
