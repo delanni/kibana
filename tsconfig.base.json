@@ -2657,14 +2657,6 @@
       "@emotion/core": ["./typings/@emotion"],
       // These typings proxies are no longer needed with moduleResolution: "bundler" which supports exports
       // "@elastic/opentelemetry-node/sdk" and "@opentelemetry/semantic-conventions/incubating" resolve via exports
-      // Force ESM (.d.ts) types for packages with dual CJS/ESM exports. With module: "commonjs" +
-      // moduleResolution: "bundler", TS picks the "require" condition → .d.cts types, which causes
-      // TS2883 during declaration emit because .cjs paths are not portable in .d.ts output.
-      "axios": ["./node_modules/axios/index.d.ts"],
-      "@langchain/core": ["./node_modules/@langchain/core/dist/index.d.ts"],
-      "@langchain/core/messages": ["./node_modules/@langchain/core/dist/messages/index.d.ts"],
-      "@langchain/core/tools": ["./node_modules/@langchain/core/dist/tools/index.d.ts"],
-      "@langchain/core/documents": ["./node_modules/@langchain/core/dist/documents/index.d.ts"],
       // Deep internal imports that aren't in package exports -- need path mappings for bundler resolution
       "elasticsearch-8.x/lib/api/types": ["./node_modules/elasticsearch-8.x/lib/api/types.d.ts"],
       "@elastic/elasticsearch/lib/api/api": ["./node_modules/@elastic/elasticsearch/lib/api/api/index.d.ts"],

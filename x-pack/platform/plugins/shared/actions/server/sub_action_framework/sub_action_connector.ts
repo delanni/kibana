@@ -10,7 +10,6 @@ import type { Logger } from '@kbn/logging';
 import type {
   AxiosBasicCredentials,
   AxiosError,
-  AxiosHeaders,
   AxiosHeaderValue,
   AxiosInstance,
   AxiosRequestHeaders,
@@ -162,7 +161,7 @@ export abstract class SubActionConnector<Config, Secrets> {
         method,
         data: this.normalizeData(data),
         configurationUtilities: this.configurationUtilities,
-        headers: this.getHeaders(auth, headers as AxiosHeaders),
+        headers: this.getHeaders(auth, headers as AxiosRequestHeaders),
         timeout,
         connectorUsageCollector,
       });

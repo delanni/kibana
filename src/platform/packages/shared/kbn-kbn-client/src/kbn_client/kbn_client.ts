@@ -7,6 +7,7 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
+import type { AxiosResponse } from 'axios';
 import type { ToolingLog } from '@kbn/tooling-log';
 
 import { KbnClientImportExport } from './kbn_client_import_export';
@@ -77,7 +78,7 @@ export class KbnClient {
   /**
    * Make a direct request to the Kibana server
    */
-  async request<T>(options: ReqOptions) {
+  async request<T>(options: ReqOptions): Promise<AxiosResponse<T>> {
     return await this.requester.request<T>(options);
   }
 
