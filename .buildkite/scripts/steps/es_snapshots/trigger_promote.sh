@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
 RELEASE_BRANCHES="$(jq -r '.versions[].branch' "$REPO_ROOT/versions.json" | tr '\n' ' ')"
 
 is_release_branch() {
