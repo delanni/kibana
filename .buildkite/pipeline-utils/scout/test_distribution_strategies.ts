@@ -40,11 +40,13 @@ async function distributeScoutTestsByModule() {
       'scout_playwright_configs.json'
     );
     await pickScoutTestGroupRunOrder(scoutConfigsPath);
-  } catch (ex) {
-    console.error('Scout test grouping error: ', ex.message);
-    if (ex.response) {
-      console.error('HTTP Error Response Status', ex.response.status);
-      console.error('HTTP Error Response Body', ex.response.data);
+  } catch (ex: unknown) {
+    const message = ex instanceof Error ? ex.message : String(ex);
+    console.error('Scout test grouping error: ', message);
+    if (ex && typeof ex === 'object' && 'response' in ex) {
+      const { response } = ex as { response: { status: number; data: unknown } };
+      console.error('HTTP Error Response Status', response.status);
+      console.error('HTTP Error Response Body', response.data);
     }
     process.exit(1);
   }

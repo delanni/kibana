@@ -399,8 +399,8 @@ export class BuildkiteClient {
         stdio: ['pipe'],
       });
       return stdout?.toString().trim() || defaultValue;
-    } catch (e) {
-      if (e.message.includes('404 Not Found')) {
+    } catch (e: unknown) {
+      if (e instanceof Error && e.message.includes('404 Not Found')) {
         return defaultValue;
       } else {
         throw e;

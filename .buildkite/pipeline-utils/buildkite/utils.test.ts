@@ -168,7 +168,7 @@ describe('getPipeline', () => {
     const duplicates: string[] = [];
 
     for (const filename of cancelablePipelines) {
-      const doc = loadYaml(fs.readFileSync(filename, 'utf8'));
+      const doc = loadYaml(fs.readFileSync(filename, 'utf8')) as Record<string, unknown>;
       if (!doc || !Array.isArray(doc.steps)) continue;
 
       const collectKeys = (steps: Array<Record<string, unknown>>) => {
@@ -192,7 +192,7 @@ describe('getPipeline', () => {
         }
       };
 
-      collectKeys(doc.steps);
+      collectKeys(doc.steps as Array<Record<string, unknown>>);
     }
 
     expect(duplicates).toEqual([]);

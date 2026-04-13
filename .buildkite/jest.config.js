@@ -7,16 +7,19 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-const { createJsWithTsEsmPreset } = require('ts-jest');
-
-const tsJestTransformCfg = createJsWithTsEsmPreset().transform;
-
 /** @type {import("jest").Config} **/
 module.exports = {
   testEnvironment: 'node',
   transform: {
-    ...tsJestTransformCfg,
+    '^.+\\.m?[tj]sx?$': [
+      'ts-jest',
+      {
+        useESM: true,
+        tsconfig: 'tsconfig.test.json',
+      },
+    ],
   },
+  extensionsToTreatAsEsm: ['.jsx', '.ts', '.tsx', '.mts'],
   transformIgnorePatterns: [
     'node_modules/(?!(@octokit/.*|universal-user-agent|before-after-hook)/)',
   ],

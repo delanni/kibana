@@ -665,8 +665,9 @@ const SKIPPABLE_PR_MATCHERS = prConfig.skip_ci_on_only_changed!.map((r) => new R
     pipeline.push(getPipeline('.buildkite/pipelines/pull_request/post_build.yml'));
 
     emitPipeline(pipeline);
-  } catch (ex) {
-    console.error('Error while generating the pipeline steps: ' + ex.message, ex);
+  } catch (ex: unknown) {
+    const message = ex instanceof Error ? ex.message : String(ex);
+    console.error('Error while generating the pipeline steps: ' + message, ex);
     process.exit(1);
   }
 })();

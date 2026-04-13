@@ -3,10 +3,17 @@
     "strict": true,
     "module": "commonjs",
     "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "allowJs": true,
     "resolveJsonModule": true,
     "noEmit": true,
-    "lib": ["es2020"],
-    "types": ["node", "jest"]
+    "target": "es2021",
+    "lib": ["es2021"],
+    "types": ["node", "jest"],
+    "paths": {
+      "#pipeline-utils": ["./pipeline-utils/index.ts"],
+      "#pipeline-utils/*": ["./pipeline-utils/*"]
+    }
   },
   "include": ["src/**/*.test.ts"]
 }

@@ -22,7 +22,7 @@ describe('Prompt Changes Detector', () => {
   });
 
   it('should post comment when called', async () => {
-    mockUpsertComment.mockResolvedValue({});
+    mockUpsertComment.mockResolvedValue({} as never);
 
     // Import and run the main function
     const { main } = await import('./prompt_changes_detector');

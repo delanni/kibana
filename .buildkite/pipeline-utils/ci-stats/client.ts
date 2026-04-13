@@ -207,8 +207,9 @@ export class CiStatsClient {
           data: body,
           headers: this.defaultHeaders,
         });
-      } catch (error) {
-        console.error('CI Stats request error:', error?.response?.data?.message);
+      } catch (error: unknown) {
+        const axiosErr = error as { response?: { data?: { message?: string } } };
+        console.error('CI Stats request error:', axiosErr?.response?.data?.message);
 
         if (attempt < maxAttempts) {
           const sec = attempt * 3;
