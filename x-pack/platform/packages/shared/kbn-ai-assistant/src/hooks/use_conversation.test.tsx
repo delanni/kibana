@@ -206,6 +206,8 @@ describe('useConversation', () => {
       expect(hookResult.result.current.conversation.value).toEqual({
         conversation: {
           id: 'my-conversation-id',
+          title: '',
+          last_updated: expect.any(String),
         },
         systemMessage: 'System',
         messages: [
