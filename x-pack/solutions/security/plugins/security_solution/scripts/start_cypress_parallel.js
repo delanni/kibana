@@ -5,5 +5,9 @@
  * 2.0.
  */
 
+// Prevent tsx (loaded by find-cypress-specs) from following tsconfig paths at runtime.
+// tsconfig.base.json maps some packages to .d.ts files for TS2883 workarounds, which
+// tsx would try to execute as JS.
+process.env.TSX_TSCONFIG_PATH = '/dev/null';
 require('@kbn/setup-node-env');
 require('./run_cypress/parallel').cli();
