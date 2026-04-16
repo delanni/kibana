@@ -30,7 +30,7 @@ import {
   touchedCriticalFiles,
   CRITICAL_FILES_JEST_INTEGRATION_TESTS,
 } from '../affected-packages';
-import { collectEnvFromLabels, expandAgentQueue } from '#pipeline-utils';
+import { collectEnvFromLabels, expandAgentQueue, getRequiredEnv } from '#pipeline-utils';
 
 // TODO: this is always false on on-merge, when switching to enable this by default, check if this is a PR
 const USE_SELECTIVE_TESTING = process.env.GITHUB_PR_LABELS?.includes(SELECTIVE_TESTS_LABEL);
@@ -38,14 +38,6 @@ const USE_SELECTIVE_TESTING = process.env.GITHUB_PR_LABELS?.includes(SELECTIVE_T
 const ALL_FTR_MANIFEST_REL_PATHS = serverless.concat(stateful);
 
 type RunGroup = TestGroupRunOrderResponse['types'][0];
-
-const getRequiredEnv = (name: string) => {
-  const value = process.env[name];
-  if (typeof value !== 'string' || !value) {
-    throw new Error(`Missing required environment variable "${name}"`);
-  }
-  return value;
-};
 
 interface FtrConfigsManifest {
   defaultQueue?: string;
