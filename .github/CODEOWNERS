@@ -3336,12 +3336,15 @@ x-pack/solutions/observability/plugins/synthetics/server/saved_objects/synthetic
 /src/cli_keystore/ @elastic/kibana-operations
 /.github/workflows/ @elastic/kibana-operations
 /.buildkite/ @elastic/kibana-operations
+/moon.yml @elastic/kibana-operations
+/.coderabbit.yml @elastic/kibana-operations
+
+# Buildkite specific owners overrides
+/.buildkite/scripts/steps/security/third_party_packages.txt @elastic/kibana-security
 
 # Evals (Buildkite + scripts)
 /.buildkite/pipelines/evals/ @elastic/obs-ai-team @elastic/security-generative-ai
 /.buildkite/scripts/steps/evals/ @elastic/obs-ai-team @elastic/security-generative-ai
-/.coderabbit.yml @elastic/kibana-operations
-/moon.yml @elastic/kibana-operations
 
 ####
 ## These rules are always last so they take ultimate priority over everything else
