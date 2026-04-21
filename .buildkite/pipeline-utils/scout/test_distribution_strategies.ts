@@ -43,7 +43,7 @@ async function distributeScoutTestsByModule() {
   } catch (ex: unknown) {
     const message = ex instanceof Error ? ex.message : String(ex);
     console.error('Scout test grouping error: ', message);
-    if (ex && typeof ex === 'object' && 'response' in ex) {
+    if (ex && typeof ex === 'object' && 'response' in ex && ex.response) {
       const { response } = ex as { response: { status: number; data: unknown } };
       console.error('HTTP Error Response Status', response.status);
       console.error('HTTP Error Response Body', response.data);
