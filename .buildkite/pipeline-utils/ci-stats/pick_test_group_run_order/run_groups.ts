@@ -36,7 +36,11 @@ export function getRunGroup(bk: BuildkiteClient, allTypes: RunGroup[], typeName:
   if (groups.length !== 1) {
     throw new Error(`expected to find exactly 1 "${typeName}" run group`);
   }
-  return groups[0];
+  const defaultGroup = groups[0];
+  defaultGroup.groups.forEach((g, i, a) => {
+    g.title = `${typeName} tests ${i + 1}/${a.length}`;
+  });
+  return defaultGroup;
 }
 
 function annotateMissingDurations(bk: BuildkiteClient, types: RunGroup[], typeName: string): void {
