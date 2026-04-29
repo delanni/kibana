@@ -8,11 +8,12 @@
  */
 
 import type { BuildkiteClient, BuildkiteGroupStep, BuildkiteStep } from '../../buildkite';
+import { AGENT_DISK_GIB, RETRIES, STEP_KEYS, TEST_STEP_TIMEOUT_MINUTES } from './const';
 import type { FunctionalGroup } from './types';
-import { expandAgentQueue, getRequiredEnv } from '#pipeline-utils';
+import { expandAgentQueue } from '#pipeline-utils';
 
 interface JestStepOptions {
-  scriptEnvVar: 'JEST_UNIT_SCRIPT' | 'JEST_INTEGRATION_SCRIPT';
+  command: string;
   label: string;
   parallelism: number;
   key: 'jest' | 'jest-integration';
@@ -31,16 +32,16 @@ export function buildJestStep(opts: JestStepOptions): BuildkiteStep | undefined 
 
   return {
     label: opts.label,
-    command: getRequiredEnv(opts.scriptEnvVar),
+    command: opts.command,
     parallelism: opts.parallelism,
-    timeout_in_minutes: 50,
+    timeout_in_minutes: TEST_STEP_TIMEOUT_MINUTES,
     key: opts.key,
     agents: expandAgentQueue('n2-4-spot', opts.agentDiskSize),
     env: opts.envFromLabels,
     depends_on: opts.dependsOn,
     retry: {
       automatic: [
-        { exit_status: '-1', limit: 3 },
+        { exit_status: '-1', limit: RETRIES.INFRA },
         ...(opts.retryCount > 0 ? [{ exit_status: '*', limit: opts.retryCount }] : []),
       ],
     },
@@ -48,6 +49,7 @@ export function buildJestStep(opts: JestStepOptions): BuildkiteStep | undefined 
 }
 
 interface FunctionalStepGroupOptions {
+  command: string;
   functionalGroups: FunctionalGroup[];
   defaultQueue: string;
   ftrExtraArgs: Record<string, string>;
@@ -67,15 +69,15 @@ export function buildFunctionalStepGroup(
 
   return {
     group: 'FTR Configs',
-    key: 'ftr-configs',
+    key: STEP_KEYS.FTR_GROUP,
     depends_on: opts.dependsOn,
     steps: sortFunctionalGroups(opts.functionalGroups).map(
       ({ title, key, queue = opts.defaultQueue }): BuildkiteStep => ({
         label: title,
-        command: getRequiredEnv('FTR_CONFIGS_SCRIPT'),
-        timeout_in_minutes: 50,
+        command: opts.command,
+        timeout_in_minutes: TEST_STEP_TIMEOUT_MINUTES,
         key,
-        agents: expandAgentQueue(queue, 105),
+        agents: expandAgentQueue(queue, AGENT_DISK_GIB.FTR),
         env: {
           FTR_CONFIG_GROUP_KEY: key,
           ...opts.ftrExtraArgs,
@@ -83,7 +85,7 @@ export function buildFunctionalStepGroup(
         },
         retry: {
           automatic: [
-            { exit_status: '-1', limit: 3 },
+            { exit_status: '-1', limit: RETRIES.INFRA },
             ...(opts.retryCount > 0 ? [{ exit_status: '*', limit: opts.retryCount }] : []),
           ],
         },
@@ -121,8 +123,8 @@ export function registerCancelKeys(
   args: { unitCount: number; integrationCount: number; functionalGroups: FunctionalGroup[] }
 ): void {
   const cancelKeys: string[] = [];
-  if (args.unitCount > 0) cancelKeys.push('jest');
-  if (args.integrationCount > 0) cancelKeys.push('jest-integration');
+  if (args.unitCount > 0) cancelKeys.push(STEP_KEYS.JEST_UNIT);
+  if (args.integrationCount > 0) cancelKeys.push(STEP_KEYS.JEST_INTEGRATION);
   for (const fg of args.functionalGroups) cancelKeys.push(fg.key);
   bk.setMetadata('cancel_on_gate_failure_batch:test_groups', JSON.stringify(cancelKeys));
 }

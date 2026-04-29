@@ -8,9 +8,7 @@
  */
 
 jest.mock('#pipeline-utils', () => ({
-  getRequiredEnv: (name: string) => `cmd:${name}`,
   expandAgentQueue: (queue: string, size: number) => ({ queue, size }),
-  collectEnvFromLabels: () => ({}),
 }));
 
 import {
@@ -23,7 +21,7 @@ import type { FunctionalGroup } from './types';
 
 describe('buildJestStep', () => {
   const baseOpts = {
-    scriptEnvVar: 'JEST_UNIT_SCRIPT' as const,
+    command: 'scripts/run_jest_unit.sh',
     label: 'Jest Tests',
     parallelism: 4,
     key: 'jest' as const,
@@ -41,7 +39,7 @@ describe('buildJestStep', () => {
     const step = buildJestStep(baseOpts) as any;
 
     expect(step.label).toBe('Jest Tests');
-    expect(step.command).toBe('cmd:JEST_UNIT_SCRIPT');
+    expect(step.command).toBe('scripts/run_jest_unit.sh');
     expect(step.parallelism).toBe(4);
     expect(step.key).toBe('jest');
     expect(step.depends_on).toEqual(['build']);
@@ -86,6 +84,7 @@ describe('sortFunctionalGroups', () => {
 
 describe('buildFunctionalStepGroup', () => {
   const baseOpts = {
+    command: 'scripts/run_ftr.sh',
     defaultQueue: 'default-q',
     ftrExtraArgs: { FTR_EXTRA_ARGS: '--bail' },
     envFromLabels: { LABEL: 'v' },
@@ -111,7 +110,7 @@ describe('buildFunctionalStepGroup', () => {
     expect(step.steps.map((s: any) => s.key)).toEqual(['a', 'b']);
 
     const first = step.steps[0];
-    expect(first.command).toBe('cmd:FTR_CONFIGS_SCRIPT');
+    expect(first.command).toBe('scripts/run_ftr.sh');
     expect(first.env).toEqual({
       FTR_CONFIG_GROUP_KEY: 'a',
       FTR_EXTRA_ARGS: '--bail',

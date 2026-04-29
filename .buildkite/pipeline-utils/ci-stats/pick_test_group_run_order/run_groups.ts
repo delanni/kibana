@@ -47,16 +47,10 @@ function annotateMissingDurations(bk: BuildkiteClient, types: RunGroup[], typeNa
     `test-group-missing-durations:${typeName}`,
     'warning',
     [
-      misses.length === 1
-        ? `The following "${typeName}" config doesn't have a recorded time in ci-stats so the automatically-determined test groups might be a little unbalanced.`
-        : `The following "${typeName}" configs don't have recorded times in ci-stats so the automatically-determined test groups might be a little unbalanced.`,
-      misses.length === 1
-        ? `If this is a new config then this warning can be ignored as times will be reported soon.`
-        : `If these are new configs then this warning can be ignored as times will be reported soon.`,
-      misses.length === 1
-        ? `The other possibility is that there aren't any tests in this config, so times are never reported.`
-        : `The other possibility is that there aren't any tests in these configs, so times are never reported.`,
-      'Empty test configs should be removed',
+      `The following "${typeName}" configs don't have recorded times in ci-stats so the automatically-determined test groups might be a little unbalanced.`,
+      `If these are new configs then this warning can be ignored as times will be reported soon.`,
+      `The other possibility is that there aren't any tests in these configs, so times are never reported.`,
+      `Empty test configs should be removed.`,
       '',
       ...misses.map((n) => ` - ${n}`),
     ].join('\n')
@@ -83,13 +77,9 @@ function annotateTooLong(bk: BuildkiteClient, types: RunGroup[], typeName: strin
     `test-group-too-long:${typeName}`,
     'warning',
     [
-      tooLongs.length === 1
-        ? `The following "${typeName}" config has a duration that exceeds the ${tooLongThresholdLabel}. ` +
-          `This is not an error, and if you don't own this config then you can ignore this warning. ` +
-          `If you own this config please split it up ASAP and ask Operations if you have questions about how to do that.`
-        : `The following "${typeName}" configs have durations that exceed the ${tooLongThresholdLabel}. ` +
-          `This is not an error, and if you don't own any of these configs then you can ignore this warning.` +
-          `If you own any of these configs please split them up ASAP and ask Operations if you have questions about how to do that.`,
+      `The following "${typeName}" configs have durations that exceed the ${tooLongThresholdLabel}. ` +
+        `This is not an error, and if you don't own any of these configs then you can ignore this warning. ` +
+        `If you own any of these configs please split them up ASAP and ask Operations if you have questions about how to do that.`,
       '',
       ...tooLongs.map(({ config, durationMin }) => ` - ${config}: ${durationMin} minutes`),
     ].join('\n')

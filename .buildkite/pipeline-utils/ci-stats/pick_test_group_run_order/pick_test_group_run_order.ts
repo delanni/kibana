@@ -14,6 +14,7 @@ import { BuildkiteClient } from '../../buildkite';
 import { CiStatsClient } from '../client';
 
 import { buildCiStatsGroups, buildCiStatsSources, getTrackedBranch } from './ci_stats_sources';
+import { AGENT_DISK_GIB, DURATION_PERCENTILE, STEP_KEYS } from './const';
 import { loadRunOrderConfig } from './env_config';
 import { getEnabledFtrConfigs } from './ftr_manifests';
 import { discoverJestIntegrationConfigs, discoverJestUnitConfigs } from './jest_configs';
@@ -70,7 +71,7 @@ export async function pickTestGroupRunOrder() {
 
   const trackedBranch = getTrackedBranch();
   const { sources, types } = await ciStats.pickTestGroupRunOrder({
-    durationPercentile: 75,
+    durationPercentile: DURATION_PERCENTILE,
     sources: buildCiStatsSources({
       trackedBranch,
       ownBranch: config.ownBranch,
@@ -106,27 +107,27 @@ export async function pickTestGroupRunOrder() {
 
   const steps: BuildkiteStep[] = [
     buildJestStep({
-      scriptEnvVar: 'JEST_UNIT_SCRIPT',
+      command: config.jestUnitScript,
       label: 'Jest Tests',
       parallelism: unit.count,
-      key: 'jest',
-      agentDiskSize: 110,
+      key: STEP_KEYS.JEST_UNIT,
+      agentDiskSize: AGENT_DISK_GIB.JEST_UNIT,
       envFromLabels: config.envFromLabels,
       dependsOn: config.jestConfigsDeps,
       retryCount: config.jestConfigsRetryCount,
     }),
     buildJestStep({
-      scriptEnvVar: 'JEST_INTEGRATION_SCRIPT',
+      command: config.jestIntegrationScript,
       label: 'Jest Integration Tests',
       parallelism: integration.count,
-      key: 'jest-integration',
-      // TODO: Reduce once we have identified the cause of random long-running tests
-      agentDiskSize: 105,
+      key: STEP_KEYS.JEST_INTEGRATION,
+      agentDiskSize: AGENT_DISK_GIB.JEST_INTEGRATION,
       envFromLabels: config.envFromLabels,
       dependsOn: config.jestConfigsDeps,
       retryCount: config.jestConfigsRetryCount,
     }),
     buildFunctionalStepGroup({
+      command: config.ftrConfigsScript,
       functionalGroups,
       defaultQueue,
       ftrExtraArgs: config.ftrExtraArgs,

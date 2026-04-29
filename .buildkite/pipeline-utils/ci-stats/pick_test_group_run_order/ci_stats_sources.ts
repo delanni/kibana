@@ -9,6 +9,7 @@
 
 import * as Fs from 'fs';
 
+import { CI_STATS_DEFAULTS, PIPELINES } from './const';
 import type { RunOrderConfig } from './types';
 
 type CiStatsSource =
@@ -44,25 +45,25 @@ export function buildCiStatsSources(args: {
 
   return [
     // try to get times from a recent successful job on this PR
-    ...(prNumber ? [{ prId: prNumber, jobName: 'kibana-pull-request' }] : []),
+    ...(prNumber ? [{ prId: prNumber, jobName: PIPELINES.PULL_REQUEST }] : []),
     // if we are running on a external job, like kibana-code-coverage-main, try finding times that are specific to that job
     // kibana-elasticsearch-serverless-verify-and-promote is not necessarily run in commit order -
     // using kibana-on-merge groups will provide a closer approximation, with a failure mode -
     // of too many ftr groups instead of potential timeouts.
     ...(!prNumber &&
-    pipelineSlug !== 'kibana-on-merge' &&
-    pipelineSlug !== 'kibana-elasticsearch-serverless-verify-and-promote'
+    pipelineSlug !== PIPELINES.ON_MERGE &&
+    pipelineSlug !== PIPELINES.ES_SERVERLESS_VERIFY
       ? [
           { branch: ownBranch, jobName: pipelineSlug },
           { branch: trackedBranch, jobName: pipelineSlug },
         ]
       : []),
     // try to get times from the mergeBase commit
-    ...(prMergeBase ? [{ commit: prMergeBase, jobName: 'kibana-on-merge' }] : []),
+    ...(prMergeBase ? [{ commit: prMergeBase, jobName: PIPELINES.ON_MERGE }] : []),
     // fallback to the latest times from the tracked branch
-    { branch: trackedBranch, jobName: 'kibana-on-merge' },
+    { branch: trackedBranch, jobName: PIPELINES.ON_MERGE },
     // finally fallback to the latest times from the main branch in case this branch is brand new
-    { branch: 'main', jobName: 'kibana-on-merge' },
+    { branch: 'main', jobName: PIPELINES.ON_MERGE },
   ];
 }
 
@@ -81,33 +82,25 @@ export function buildCiStatsGroups(args: {
   return [
     {
       type: config.unitType,
-      defaultMin: 4,
+      ...CI_STATS_DEFAULTS.JEST_UNIT,
       maxMin: config.jestUnitMaxMinutes,
       tooLongMin: config.jestUnitTooLongMinutes,
-      overheadMin: 0.2,
-      warmupMin: 4,
-      concurrency: 3,
       names: jestUnitConfigs,
     },
     {
       type: config.integrationType,
-      defaultMin: 15,
+      ...CI_STATS_DEFAULTS.JEST_INTEGRATION,
       maxMin: config.jestIntegrationMaxMinutes,
       tooLongMin: config.jestIntegrationTooLongMinutes,
-      overheadMin: 0.2,
-      warmupMin: 5,
-      concurrency: 1,
       names: jestIntegrationConfigs,
     },
     ...Array.from(ftrConfigsByQueue).map(([queue, names]) => ({
       type: config.functionalType,
-      defaultMin: 60,
+      ...CI_STATS_DEFAULTS.FUNCTIONAL,
       queue,
       maxMin: config.functionalMaxMinutes,
       tooLongMin: config.functionalTooLongMinutes,
       minimumIsolationMin: config.functionalMinimumIsolationMin,
-      overheadMin: 0,
-      warmupMin: 3,
       names,
     })),
   ];

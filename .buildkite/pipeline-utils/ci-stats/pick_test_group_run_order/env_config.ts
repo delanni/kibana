@@ -8,6 +8,7 @@
  */
 
 import { SELECTIVE_TESTS_LABEL } from '../../affected-packages';
+import { MAX_MINUTES, RETRIES } from './const';
 import type { RunOrderConfig } from './types';
 import { collectEnvFromLabels, getRequiredEnv } from '#pipeline-utils';
 
@@ -24,13 +25,16 @@ export function loadRunOrderConfig(): RunOrderConfig {
     integrationType: getRequiredEnv('TEST_GROUP_TYPE_INTEGRATION'),
     functionalType: getRequiredEnv('TEST_GROUP_TYPE_FUNCTIONAL'),
 
-    jestUnitMaxMinutes: parseFloatEnv('JEST_UNIT_MAX_MINUTES', 35),
-    jestIntegrationMaxMinutes: parseFloatEnv('JEST_INTEGRATION_MAX_MINUTES', 30),
-    functionalMaxMinutes: parseFloatEnv('FUNCTIONAL_MAX_MINUTES', 30),
+    jestUnitMaxMinutes: parseFloatEnv('JEST_UNIT_MAX_MINUTES', MAX_MINUTES.JEST_UNIT_DEFAULT),
+    jestIntegrationMaxMinutes: parseFloatEnv(
+      'JEST_INTEGRATION_MAX_MINUTES',
+      MAX_MINUTES.JEST_INTEGRATION_DEFAULT
+    ),
+    functionalMaxMinutes: parseFloatEnv('FUNCTIONAL_MAX_MINUTES', MAX_MINUTES.FUNCTIONAL_DEFAULT),
 
-    jestUnitTooLongMinutes: 27,
-    jestIntegrationTooLongMinutes: 27,
-    functionalTooLongMinutes: 27,
+    jestUnitTooLongMinutes: MAX_MINUTES.TOO_LONG,
+    jestIntegrationTooLongMinutes: MAX_MINUTES.TOO_LONG,
+    functionalTooLongMinutes: MAX_MINUTES.TOO_LONG,
 
     limitConfigType: parseCsvEnv('LIMIT_CONFIG_TYPE') ?? VALID_LIMIT_CONFIG_TYPES,
     limitSolutions: parseLimitSolutions(),
@@ -38,13 +42,17 @@ export function loadRunOrderConfig(): RunOrderConfig {
 
     functionalMinimumIsolationMin: parseOptionalFloatEnv('FUNCTIONAL_MINIMUM_ISOLATION_MIN'),
 
-    ftrConfigsRetryCount: parseIntEnv('FTR_CONFIGS_RETRY_COUNT', 1),
-    jestConfigsRetryCount: parseIntEnv('JEST_CONFIGS_RETRY_COUNT', 1),
+    ftrConfigsRetryCount: parseIntEnv('FTR_CONFIGS_RETRY_COUNT', RETRIES.FTR),
+    jestConfigsRetryCount: parseIntEnv('JEST_CONFIGS_RETRY_COUNT', RETRIES.JEST),
 
     // FTR_CONFIGS_DEPS / JEST_CONFIGS_DEPS originally use an explicit `!== undefined`
     // check, so an explicit empty string yields [] (no deps), distinct from "unset".
     ftrConfigsDeps: parseDefinedCsvEnv('FTR_CONFIGS_DEPS') ?? ['build'],
     jestConfigsDeps: parseDefinedCsvEnv('JEST_CONFIGS_DEPS') ?? [],
+
+    jestUnitScript: getRequiredEnv('JEST_UNIT_SCRIPT'),
+    jestIntegrationScript: getRequiredEnv('JEST_INTEGRATION_SCRIPT'),
+    ftrConfigsScript: getRequiredEnv('FTR_CONFIGS_SCRIPT'),
 
     ftrExtraArgs: process.env.FTR_EXTRA_ARGS ? { FTR_EXTRA_ARGS: process.env.FTR_EXTRA_ARGS } : {},
     envFromLabels: collectEnvFromLabels(),

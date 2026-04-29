@@ -46,6 +46,10 @@ export interface RunOrderConfig {
   ftrConfigsDeps: string[];
   jestConfigsDeps: string[];
 
+  jestUnitScript: string;
+  jestIntegrationScript: string;
+  ftrConfigsScript: string;
+
   ftrExtraArgs: Record<string, string>;
   envFromLabels: Record<string, string>;
 
