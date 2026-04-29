@@ -106,3 +106,6 @@ export const STEP_KEYS = {
   JEST_INTEGRATION: 'jest-integration',
   FTR_GROUP: 'ftr-configs',
 } as const;
+
+/** PR label that prevents selective testing. */
+export const PREVENT_SELECTIVE_TESTS_LABEL = 'ci:prevent-selective-testing';

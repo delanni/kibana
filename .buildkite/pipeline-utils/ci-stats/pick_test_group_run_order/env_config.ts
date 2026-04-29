@@ -7,8 +7,7 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-import { SELECTIVE_TESTS_LABEL } from '../../affected-packages';
-import { MAX_MINUTES, RETRIES } from './const';
+import { MAX_MINUTES, RETRIES, PREVENT_SELECTIVE_TESTS_LABEL } from './const';
 import type { RunOrderConfig } from './types';
 import { collectEnvFromLabels, getRequiredEnv } from '#pipeline-utils';
 
@@ -57,8 +56,10 @@ export function loadRunOrderConfig(): RunOrderConfig {
     ftrExtraArgs: process.env.FTR_EXTRA_ARGS ? { FTR_EXTRA_ARGS: process.env.FTR_EXTRA_ARGS } : {},
     envFromLabels: collectEnvFromLabels(),
 
-    // TODO: this is always false on on-merge, when switching to enable this by default, check if this is a PR
-    useSelectiveTesting: Boolean(process.env.GITHUB_PR_LABELS?.includes(SELECTIVE_TESTS_LABEL)),
+    // default true on PRs
+    useSelectiveTesting:
+      Boolean(process.env.GITHUB_PR_NUMBER) &&
+      !process.env.GITHUB_PR_LABELS?.includes(PREVENT_SELECTIVE_TESTS_LABEL),
     prMergeBase: process.env.GITHUB_PR_MERGE_BASE || undefined,
     prNumber: process.env.GITHUB_PR_NUMBER || undefined,
     ownBranch: process.env.BUILDKITE_BRANCH as string,
