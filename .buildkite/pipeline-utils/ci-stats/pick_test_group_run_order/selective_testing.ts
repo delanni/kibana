@@ -27,9 +27,9 @@ export interface SelectiveTestingContext {
 }
 
 /**
- * Resolve the affected-packages context once for a PR's mergeBase. Returns
- * `null` when detection failed or no packages are affected, signaling that
- * downstream filters should be no-ops.
+ * Resolve the affected-packages context once for a PR's mergeBase.
+ * Returns `null` when detection failed, signaling that selective testing should be skipped.
+ * An empty set means that no packages are affected, so no tests should be run.
  */
 export async function resolveSelectiveTestingContext(
   mergeBase: string

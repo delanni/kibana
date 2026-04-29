@@ -56,7 +56,7 @@ export async function pickTestGroupRunOrder() {
 
   if (config.useSelectiveTesting && config.prMergeBase) {
     const selectiveCtx = await resolveSelectiveTestingContext(config.prMergeBase);
-    if (selectiveCtx) {
+    if (selectiveCtx !== null) {
       jestUnitConfigs = filterJestUnitConfigsByAffected(jestUnitConfigs, selectiveCtx);
       jestIntegrationConfigs = filterJestIntegrationConfigsByAffected(
         jestIntegrationConfigs,
