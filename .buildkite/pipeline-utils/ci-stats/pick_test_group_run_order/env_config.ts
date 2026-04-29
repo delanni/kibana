@@ -8,7 +8,6 @@
  */
 
 import { MAX_MINUTES, RETRIES, PREVENT_SELECTIVE_TESTS_LABEL } from './const';
-import type { RunOrderConfig } from './types';
 import { collectEnvFromLabels, getRequiredEnv } from '#pipeline-utils';
 
 const VALID_SOLUTIONS = ['observability', 'search', 'security', 'workplaceai'];
@@ -18,7 +17,7 @@ const VALID_LIMIT_CONFIG_TYPES = ['unit', 'integration', 'functional'];
  * Read and validate every `process.env.*` input the orchestrator depends on.
  * Throws synchronously when something is malformed so callers don't have to.
  */
-export function loadRunOrderConfig(): RunOrderConfig {
+export function loadRunOrderConfig() {
   return {
     unitType: getRequiredEnv('TEST_GROUP_TYPE_UNIT'),
     integrationType: getRequiredEnv('TEST_GROUP_TYPE_INTEGRATION'),
@@ -53,7 +52,9 @@ export function loadRunOrderConfig(): RunOrderConfig {
     jestIntegrationScript: getRequiredEnv('JEST_INTEGRATION_SCRIPT'),
     ftrConfigsScript: getRequiredEnv('FTR_CONFIGS_SCRIPT'),
 
-    ftrExtraArgs: process.env.FTR_EXTRA_ARGS ? { FTR_EXTRA_ARGS: process.env.FTR_EXTRA_ARGS } : {},
+    ftrExtraArgs: process.env.FTR_EXTRA_ARGS
+      ? { FTR_EXTRA_ARGS: process.env.FTR_EXTRA_ARGS }
+      : ({} as Record<string, string>),
     envFromLabels: collectEnvFromLabels(),
 
     // default true on PRs
@@ -64,8 +65,10 @@ export function loadRunOrderConfig(): RunOrderConfig {
     prNumber: process.env.GITHUB_PR_NUMBER || undefined,
     ownBranch: process.env.BUILDKITE_BRANCH as string,
     pipelineSlug: process.env.BUILDKITE_PIPELINE_SLUG as string,
-  };
+  } as const;
 }
+
+export type RunOrderConfig = ReturnType<typeof loadRunOrderConfig>;
 
 function parseFloatEnv(name: string, defaultValue: number): number {
   const raw = process.env[name];

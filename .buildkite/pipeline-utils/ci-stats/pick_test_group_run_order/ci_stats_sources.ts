@@ -10,7 +10,7 @@
 import * as Fs from 'fs';
 
 import { CI_STATS_DEFAULTS, PIPELINES } from './const';
-import type { RunOrderConfig } from './types';
+import type { RunOrderConfig } from './env_config';
 
 type CiStatsSource =
   | { branch: string; jobName: string }
