@@ -73,17 +73,28 @@ function globJestConfigs(patterns: string[], limitSolutions: string[] | undefine
 /**
  * When LIMIT_SOLUTIONS is set, restrict the glob to those solutions while
  * still allowing platform tests (`src/`, `x-pack/platform/`) to run.
+ *
+ * Negation patterns (starting with `!`) must keep `!` as their first character
+ * to be treated as exclusions by globby, so they are passed through unchanged
+ * and applied globally across all prefixed positive patterns.
  */
-function globsForSolutions(patterns: string[], limitSolutions: string[] | undefined): string[] {
+export function globsForSolutions(
+  patterns: string[],
+  limitSolutions: string[] | undefined
+): string[] {
   if (!limitSolutions) {
     return patterns;
   }
 
+  const positivePatterns = patterns.filter((p) => !p.startsWith('!'));
+  const negationPatterns = patterns.filter((p) => p.startsWith('!'));
+
   const platformPatterns = ['src/', 'x-pack/platform/'].flatMap((platformPrefix) =>
-    patterns.map((pattern) => `${platformPrefix}${pattern}`)
+    positivePatterns.map((pattern) => `${platformPrefix}${pattern}`)
   );
 
   return limitSolutions
-    .flatMap((solution) => patterns.map((p) => `x-pack/solutions/${solution}/${p}`))
-    .concat(platformPatterns);
+    .flatMap((solution) => positivePatterns.map((p) => `x-pack/solutions/${solution}/${p}`))
+    .concat(platformPatterns)
+    .concat(negationPatterns);
 }

@@ -80,7 +80,9 @@ export function getEnabledFtrConfigs(
       !configs.enabled.every(
         (p): p is string | { [configPath: string]: { queue: string } } =>
           typeof p === 'string' ||
-          (isObj(p) && Object.values(p).every((v) => isObj(v) && typeof v.queue === 'string'))
+          (isObj(p) &&
+            Object.keys(p).length === 1 &&
+            Object.values(p).every((v) => isObj(v) && typeof v.queue === 'string'))
       )
     ) {
       throw new Error(`expected "enabled" value to be an array of strings or objects shaped as:\n

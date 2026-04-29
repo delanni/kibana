@@ -12,11 +12,7 @@ jest.mock('#pipeline-utils', () => ({
   collectEnvFromLabels: () => ({}),
 }));
 
-jest.mock('../../affected-packages', () => ({
-  SELECTIVE_TESTS_LABEL: 'ci:selective-tests',
-}));
-
-import { MAX_MINUTES, RETRIES } from './const';
+import { MAX_MINUTES, PREVENT_SELECTIVE_TESTS_LABEL, RETRIES } from './const';
 import { loadRunOrderConfig } from './env_config';
 
 const TYPE_ENV = {
@@ -93,6 +89,17 @@ describe('loadRunOrderConfig', () => {
     expect(() => loadRunOrderConfig()).toThrow(new RegExp(errFragment));
   });
 
+  it('rejects unknown LIMIT_CONFIG_TYPE values', () => {
+    process.env.LIMIT_CONFIG_TYPE = 'unit,unitest';
+    expect(() => loadRunOrderConfig()).toThrow('invalid LIMIT_CONFIG_TYPE value(s): unitest');
+  });
+
+  it('accepts valid LIMIT_CONFIG_TYPE values', () => {
+    process.env.LIMIT_CONFIG_TYPE = 'unit,functional';
+    const cfg = loadRunOrderConfig();
+    expect(cfg.limitConfigType).toEqual(['unit', 'functional']);
+  });
+
   it('rejects unknown LIMIT_SOLUTIONS values', () => {
     process.env.LIMIT_SOLUTIONS = 'observability,not-a-solution';
     expect(() => loadRunOrderConfig()).toThrow('Unsupported LIMIT_SOLUTIONS value');
@@ -116,9 +123,21 @@ describe('loadRunOrderConfig', () => {
     expect(cfg.ftrConfigsDeps).toEqual(['build']);
   });
 
-  it('detects selective testing label', () => {
-    process.env.GITHUB_PR_LABELS = 'foo,ci:selective-tests,bar';
+  it('enables selective testing on PRs by default', () => {
+    process.env.GITHUB_PR_NUMBER = '12345';
     const cfg = loadRunOrderConfig();
     expect(cfg.useSelectiveTesting).toBe(true);
+  });
+
+  it('disables selective testing when the prevent label is present', () => {
+    process.env.GITHUB_PR_NUMBER = '12345';
+    process.env.GITHUB_PR_LABELS = `foo,${PREVENT_SELECTIVE_TESTS_LABEL},bar`;
+    const cfg = loadRunOrderConfig();
+    expect(cfg.useSelectiveTesting).toBe(false);
+  });
+
+  it('disables selective testing when not a PR', () => {
+    const cfg = loadRunOrderConfig();
+    expect(cfg.useSelectiveTesting).toBe(false);
   });
 });

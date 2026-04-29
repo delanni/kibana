@@ -19,6 +19,9 @@ const VALID_LIMIT_CONFIG_TYPES = ['unit', 'integration', 'functional'];
  */
 export function loadRunOrderConfig() {
   return {
+    ownBranch: getRequiredEnv('BUILDKITE_BRANCH'),
+    pipelineSlug: getRequiredEnv('BUILDKITE_PIPELINE_SLUG'),
+
     unitType: getRequiredEnv('TEST_GROUP_TYPE_UNIT'),
     integrationType: getRequiredEnv('TEST_GROUP_TYPE_INTEGRATION'),
     functionalType: getRequiredEnv('TEST_GROUP_TYPE_FUNCTIONAL'),
@@ -34,7 +37,7 @@ export function loadRunOrderConfig() {
     jestIntegrationTooLongMinutes: MAX_MINUTES.TOO_LONG,
     functionalTooLongMinutes: MAX_MINUTES.TOO_LONG,
 
-    limitConfigType: parseCsvEnv('LIMIT_CONFIG_TYPE') ?? VALID_LIMIT_CONFIG_TYPES,
+    limitConfigType: parseLimitConfigType(),
     limitSolutions: parseLimitSolutions(),
     ftrConfigPatterns: parseCsvEnv('FTR_CONFIG_PATTERNS'),
 
@@ -63,8 +66,6 @@ export function loadRunOrderConfig() {
       !process.env.GITHUB_PR_LABELS?.includes(PREVENT_SELECTIVE_TESTS_LABEL),
     prMergeBase: process.env.GITHUB_PR_MERGE_BASE || undefined,
     prNumber: process.env.GITHUB_PR_NUMBER || undefined,
-    ownBranch: process.env.BUILDKITE_BRANCH as string,
-    pipelineSlug: process.env.BUILDKITE_PIPELINE_SLUG as string,
   } as const;
 }
 
@@ -119,6 +120,20 @@ function splitCsv(raw: string): string[] {
     .split(',')
     .map((t) => t.trim())
     .filter(Boolean);
+}
+
+function parseLimitConfigType(): string[] {
+  const values = parseCsvEnv('LIMIT_CONFIG_TYPE');
+  if (!values) return VALID_LIMIT_CONFIG_TYPES;
+  const invalid = values.filter((v) => !VALID_LIMIT_CONFIG_TYPES.includes(v));
+  if (invalid.length) {
+    throw new Error(
+      `invalid LIMIT_CONFIG_TYPE value(s): ${invalid.join(
+        ', '
+      )}. Valid values: ${VALID_LIMIT_CONFIG_TYPES.join(', ')}`
+    );
+  }
+  return values;
 }
 
 function parseLimitSolutions(): string[] | undefined {

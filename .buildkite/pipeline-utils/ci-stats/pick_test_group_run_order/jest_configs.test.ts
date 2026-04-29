@@ -15,7 +15,7 @@ jest.mock('../../../sharded_jest_configs.json', () => ({
 
 jest.mock('../../../disabled_jest_configs.json', () => [], { virtual: false });
 
-import { SHARD_ANNOTATION_SEP, expandShardedJestConfigs } from './jest_configs';
+import { SHARD_ANNOTATION_SEP, expandShardedJestConfigs, globsForSolutions } from './jest_configs';
 
 describe('expandShardedJestConfigs', () => {
   it('passes configs not in the shard map through unchanged', () => {
@@ -51,5 +51,33 @@ describe('expandShardedJestConfigs', () => {
 
   it('returns an empty array when given no input', () => {
     expect(expandShardedJestConfigs([])).toEqual([]);
+  });
+});
+
+describe('globsForSolutions', () => {
+  const PATTERNS = ['**/jest.config.js', '!**/__fixtures__/**'];
+
+  it('returns patterns unchanged when limitSolutions is undefined', () => {
+    expect(globsForSolutions(PATTERNS, undefined)).toEqual(PATTERNS);
+  });
+
+  it('prefixes positive patterns with solution and platform paths', () => {
+    const result = globsForSolutions(PATTERNS, ['security']);
+    expect(result).toContain('x-pack/solutions/security/**/jest.config.js');
+    expect(result).toContain('src/**/jest.config.js');
+    expect(result).toContain('x-pack/platform/**/jest.config.js');
+  });
+
+  it('keeps negation patterns unprefixed so globby treats them as exclusions', () => {
+    const result = globsForSolutions(PATTERNS, ['security']);
+    // must appear as-is, not as 'src/!**/__fixtures__/**' etc.
+    expect(result).toContain('!**/__fixtures__/**');
+    expect(result.filter((p) => p.startsWith('!'))).toEqual(['!**/__fixtures__/**']);
+  });
+
+  it('includes platform patterns even when multiple solutions are listed', () => {
+    const result = globsForSolutions(PATTERNS, ['security', 'observability']);
+    expect(result).toContain('src/**/jest.config.js');
+    expect(result).toContain('x-pack/platform/**/jest.config.js');
   });
 });
