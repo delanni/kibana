@@ -1,0 +1,120 @@
+/*
+ * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
+ * or more contributor license agreements. Licensed under the "Elastic License
+ * 2.0", the "GNU Affero General Public License v3.0 only", and the "Server Side
+ * Public License v 1"; you may not use this file except in compliance with, at
+ * your election, the "Elastic License 2.0", the "GNU Affero General Public
+ * License v3.0 only", or the "Server Side Public License, v 1".
+ */
+
+import { SELECTIVE_TESTS_LABEL } from '../../affected-packages';
+import type { RunOrderConfig } from './types';
+import { collectEnvFromLabels, getRequiredEnv } from '#pipeline-utils';
+
+const VALID_SOLUTIONS = ['observability', 'search', 'security', 'workplaceai'];
+const VALID_LIMIT_CONFIG_TYPES = ['unit', 'integration', 'functional'];
+
+/**
+ * Read and validate every `process.env.*` input the orchestrator depends on.
+ * Throws synchronously when something is malformed so callers don't have to.
+ */
+export function loadRunOrderConfig(): RunOrderConfig {
+  return {
+    unitType: getRequiredEnv('TEST_GROUP_TYPE_UNIT'),
+    integrationType: getRequiredEnv('TEST_GROUP_TYPE_INTEGRATION'),
+    functionalType: getRequiredEnv('TEST_GROUP_TYPE_FUNCTIONAL'),
+
+    jestUnitMaxMinutes: parseFloatEnv('JEST_UNIT_MAX_MINUTES', 35),
+    jestIntegrationMaxMinutes: parseFloatEnv('JEST_INTEGRATION_MAX_MINUTES', 30),
+    functionalMaxMinutes: parseFloatEnv('FUNCTIONAL_MAX_MINUTES', 30),
+
+    jestUnitTooLongMinutes: 27,
+    jestIntegrationTooLongMinutes: 27,
+    functionalTooLongMinutes: 27,
+
+    limitConfigType: parseCsvEnv('LIMIT_CONFIG_TYPE') ?? VALID_LIMIT_CONFIG_TYPES,
+    limitSolutions: parseLimitSolutions(),
+    ftrConfigPatterns: parseCsvEnv('FTR_CONFIG_PATTERNS'),
+
+    functionalMinimumIsolationMin: parseOptionalFloatEnv('FUNCTIONAL_MINIMUM_ISOLATION_MIN'),
+
+    ftrConfigsRetryCount: parseIntEnv('FTR_CONFIGS_RETRY_COUNT', 1),
+    jestConfigsRetryCount: parseIntEnv('JEST_CONFIGS_RETRY_COUNT', 1),
+
+    // FTR_CONFIGS_DEPS / JEST_CONFIGS_DEPS originally use an explicit `!== undefined`
+    // check, so an explicit empty string yields [] (no deps), distinct from "unset".
+    ftrConfigsDeps: parseDefinedCsvEnv('FTR_CONFIGS_DEPS') ?? ['build'],
+    jestConfigsDeps: parseDefinedCsvEnv('JEST_CONFIGS_DEPS') ?? [],
+
+    ftrExtraArgs: process.env.FTR_EXTRA_ARGS ? { FTR_EXTRA_ARGS: process.env.FTR_EXTRA_ARGS } : {},
+    envFromLabels: collectEnvFromLabels(),
+
+    // TODO: this is always false on on-merge, when switching to enable this by default, check if this is a PR
+    useSelectiveTesting: Boolean(process.env.GITHUB_PR_LABELS?.includes(SELECTIVE_TESTS_LABEL)),
+    prMergeBase: process.env.GITHUB_PR_MERGE_BASE || undefined,
+    prNumber: process.env.GITHUB_PR_NUMBER || undefined,
+    ownBranch: process.env.BUILDKITE_BRANCH as string,
+    pipelineSlug: process.env.BUILDKITE_PIPELINE_SLUG as string,
+  };
+}
+
+function parseFloatEnv(name: string, defaultValue: number): number {
+  const raw = process.env[name];
+  if (!raw) return defaultValue;
+  const value = parseFloat(raw);
+  if (Number.isNaN(value)) {
+    throw new Error(`invalid ${name}: ${raw}`);
+  }
+  return value;
+}
+
+function parseOptionalFloatEnv(name: string): number | undefined {
+  const raw = process.env[name];
+  if (!raw) return undefined;
+  const value = parseFloat(raw);
+  if (Number.isNaN(value)) {
+    throw new Error(`invalid ${name}: ${raw}`);
+  }
+  return value;
+}
+
+function parseIntEnv(name: string, defaultValue: number): number {
+  const raw = process.env[name];
+  if (!raw) return defaultValue;
+  const value = parseInt(raw, 10);
+  if (Number.isNaN(value)) {
+    throw new Error(`invalid ${name}: ${raw}`);
+  }
+  return value;
+}
+
+/** Returns undefined when the env var is unset OR an empty string. */
+function parseCsvEnv(name: string): string[] | undefined {
+  const raw = process.env[name];
+  if (!raw) return undefined;
+  return splitCsv(raw);
+}
+
+/** Returns undefined only when the env var is unset; an empty string yields []. */
+function parseDefinedCsvEnv(name: string): string[] | undefined {
+  const raw = process.env[name];
+  if (raw === undefined) return undefined;
+  return splitCsv(raw);
+}
+
+function splitCsv(raw: string): string[] {
+  return raw
+    .split(',')
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
+function parseLimitSolutions(): string[] | undefined {
+  const limitSolutions = parseCsvEnv('LIMIT_SOLUTIONS');
+  if (!limitSolutions) return undefined;
+  const invalid = limitSolutions.filter((s) => !VALID_SOLUTIONS.includes(s));
+  if (invalid.length) {
+    throw new Error('Unsupported LIMIT_SOLUTIONS value');
+  }
+  return limitSolutions;
+}
