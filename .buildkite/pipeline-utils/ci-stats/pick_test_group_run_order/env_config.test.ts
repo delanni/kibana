@@ -12,7 +12,12 @@ jest.mock('#pipeline-utils', () => ({
   collectEnvFromLabels: () => ({}),
 }));
 
-import { MAX_MINUTES, PREVENT_SELECTIVE_TESTS_LABEL, RETRIES } from './const';
+import {
+  MAX_MINUTES,
+  PREVENT_SELECTIVE_TESTS_LABEL,
+  RETRIES,
+  USE_SELECTIVE_FTR_LABEL,
+} from './const';
 import { loadRunOrderConfig } from './env_config';
 
 const TYPE_ENV = {
@@ -139,5 +144,24 @@ describe('loadRunOrderConfig', () => {
   it('disables selective testing when not a PR', () => {
     const cfg = loadRunOrderConfig();
     expect(cfg.useSelectiveTesting).toBe(false);
+  });
+
+  it('enables FTR selective testing when the opt-in label is present on a PR', () => {
+    process.env.GITHUB_PR_NUMBER = '12345';
+    process.env.GITHUB_PR_LABELS = `foo,${USE_SELECTIVE_FTR_LABEL},bar`;
+    const cfg = loadRunOrderConfig();
+    expect(cfg.useSelectiveFtrTesting).toBe(true);
+  });
+
+  it('does not enable FTR selective testing without the opt-in label', () => {
+    process.env.GITHUB_PR_NUMBER = '12345';
+    const cfg = loadRunOrderConfig();
+    expect(cfg.useSelectiveFtrTesting).toBe(false);
+  });
+
+  it('does not enable FTR selective testing outside of a PR', () => {
+    process.env.GITHUB_PR_LABELS = USE_SELECTIVE_FTR_LABEL;
+    const cfg = loadRunOrderConfig();
+    expect(cfg.useSelectiveFtrTesting).toBe(false);
   });
 });

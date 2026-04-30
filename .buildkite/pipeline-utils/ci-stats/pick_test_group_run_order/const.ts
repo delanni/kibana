@@ -30,7 +30,8 @@
  *   GITHUB_PR_NUMBER             — PR number; activates PR-specific ci-stats source
  *   GITHUB_PR_MERGE_BASE         — merge-base commit; activates selective testing + merge-base source
  *   GITHUB_PR_LABELS             — comma-separated PR labels; activates selective testing when
- *                                  it contains the selective-tests label
+ *                                  it contains the selective-tests label, and opts into
+ *                                  FTR selective testing via `ci:use-selective-testing`
  */
 
 /**
@@ -109,3 +110,6 @@ export const STEP_KEYS = {
 
 /** PR label that prevents selective testing. */
 export const PREVENT_SELECTIVE_TESTS_LABEL = 'ci:prevent-selective-testing';
+
+/** PR label that opts into FTR selective testing (run only configs whose test territory was touched). */
+export const USE_SELECTIVE_FTR_LABEL = 'ci:use-selective-testing';

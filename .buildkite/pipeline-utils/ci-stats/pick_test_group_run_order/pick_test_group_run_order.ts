@@ -13,12 +13,15 @@ import type { BuildkiteStep } from '../../buildkite';
 import { BuildkiteClient } from '../../buildkite';
 import { CiStatsClient } from '../client';
 
+import { listChangedFiles } from '../../affected-packages';
+
 import { buildCiStatsGroups, buildCiStatsSources, getTrackedBranch } from './ci_stats_sources';
 import { AGENT_DISK_GIB, DURATION_PERCENTILE, STEP_KEYS } from './const';
 import { loadRunOrderConfig } from './env_config';
 import { getEnabledFtrConfigs } from './ftr_manifests';
 import { discoverJestIntegrationConfigs, discoverJestUnitConfigs } from './jest_configs';
 import { getRunGroup, getRunGroups } from './run_groups';
+import { filterFtrConfigsBySelectiveTesting } from './selective_ftr';
 import {
   filterJestIntegrationConfigsByAffected,
   filterJestUnitConfigsByAffected,
@@ -48,20 +51,37 @@ export async function pickTestGroupRunOrder() {
   let jestIntegrationConfigs = integrationIncluded
     ? discoverJestIntegrationConfigs(config.limitSolutions)
     : [];
-  const { defaultQueue, ftrConfigsByQueue } = getEnabledFtrConfigs(
-    config.ftrConfigPatterns,
-    config.limitSolutions
-  );
+  const enabledFtr = getEnabledFtrConfigs(config.ftrConfigPatterns, config.limitSolutions);
+  const { defaultQueue } = enabledFtr;
+  let ftrConfigsByQueue = enabledFtr.ftrConfigsByQueue;
   if (!ftrConfigsIncluded) ftrConfigsByQueue.clear();
+
+  let prChangedFiles: string[] | undefined;
 
   if (config.useSelectiveTesting && config.prMergeBase) {
     const selectiveCtx = await resolveSelectiveTestingContext(config.prMergeBase);
     if (selectiveCtx !== null) {
+      prChangedFiles = selectiveCtx.prChangedFiles;
       jestUnitConfigs = filterJestUnitConfigsByAffected(jestUnitConfigs, selectiveCtx);
       jestIntegrationConfigs = filterJestIntegrationConfigsByAffected(
         jestIntegrationConfigs,
         selectiveCtx
       );
+    }
+  }
+
+  if (config.useSelectiveFtrTesting && config.prMergeBase && ftrConfigsByQueue.size) {
+    const changedFiles =
+      prChangedFiles ?? listChangedFiles({ mergeBase: config.prMergeBase, commit: 'HEAD' });
+    const result = filterFtrConfigsBySelectiveTesting({
+      ftrConfigsByQueue,
+      prChangedFiles: changedFiles,
+    });
+    if (result.applied) {
+      console.log(`FTR selective testing applied: ${result.reason}`);
+      ftrConfigsByQueue = result.ftrConfigsByQueue;
+    } else {
+      console.log(`FTR selective testing skipped: ${result.reason}`);
     }
   }
 

@@ -7,7 +7,12 @@
  * License v3.0 only", or the "Server Side Public License, v 1".
  */
 
-import { MAX_MINUTES, RETRIES, PREVENT_SELECTIVE_TESTS_LABEL } from './const';
+import {
+  MAX_MINUTES,
+  RETRIES,
+  PREVENT_SELECTIVE_TESTS_LABEL,
+  USE_SELECTIVE_FTR_LABEL,
+} from './const';
 import { collectEnvFromLabels, getRequiredEnv } from '#pipeline-utils';
 
 const VALID_SOLUTIONS = ['observability', 'search', 'security', 'workplaceai'];
@@ -64,9 +69,21 @@ export function loadRunOrderConfig() {
     useSelectiveTesting:
       Boolean(process.env.GITHUB_PR_NUMBER) &&
       !process.env.GITHUB_PR_LABELS?.includes(PREVENT_SELECTIVE_TESTS_LABEL),
+    // strict opt-in via PR label; only narrows FTR
+    useSelectiveFtrTesting:
+      Boolean(process.env.GITHUB_PR_NUMBER) && hasPrLabel(USE_SELECTIVE_FTR_LABEL),
     prMergeBase: process.env.GITHUB_PR_MERGE_BASE || undefined,
     prNumber: process.env.GITHUB_PR_NUMBER || undefined,
   } as const;
+}
+
+function hasPrLabel(label: string): boolean {
+  const raw = process.env.GITHUB_PR_LABELS;
+  if (!raw) return false;
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .includes(label);
 }
 
 export type RunOrderConfig = ReturnType<typeof loadRunOrderConfig>;
