@@ -125,7 +125,11 @@ class YamlLintCheck extends PrecommitCheck {
     for (const file of yamlFiles) {
       try {
         const content = await readFile(file.getAbsolutePath(), 'utf8');
-        yamlParseAllDocuments(content);
+        const docs = yamlParseAllDocuments(content);
+        const parseErrors = docs.flatMap((doc) => doc.errors);
+        if (parseErrors.length > 0) {
+          throw new Error(parseErrors.map((e) => e.message).join('\n'));
+        }
       } catch (error) {
         errors.push(`Error in ${file.getRelativePath()}:\n${error.message}`);
       }
