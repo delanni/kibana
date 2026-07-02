@@ -31,14 +31,17 @@ import type { IKbnUrlStateStorage } from '@kbn/kibana-utils-plugin/public';
 import type { ESQLControlVariable } from '@kbn/esql-types';
 import type { DiscoverSession } from '@kbn/saved-search-plugin/common';
 import { isOfAggregateQueryType } from '@kbn/es-query';
+import type { UnifiedDataTableRestorableState } from '@kbn/unified-data-table';
 import { DISCOVER_QUERY_MODE_KEY } from '../../../../../common/constants';
 import type { DiscoverCustomizationContext } from '../../../../customizations';
 import type { DiscoverServices } from '../../../../build_services';
+import type { ContextAwarenessToolkit } from '../../../../context_awareness/toolkit';
 import {
   type RuntimeStateManager,
   selectTabRuntimeInternalState,
   selectTabRuntimeState,
 } from './runtime_state';
+import { createContextAwarenessToolkit } from './context_awareness_toolkit';
 import {
   DEFAULT_PROFILE_STATE_FIELDS,
   TabsBarVisibility,
@@ -193,6 +196,11 @@ export const internalStateSlice = createSlice({
       state.tabs.unsavedIds = action.payload.unsavedTabIds;
     },
 
+    disconnectTab: (state, action: TabAction) =>
+      withTab(state, action.payload, (tab) => {
+        tab.initializationState = { initializationStatus: TabInitializationStatus.Disconnected };
+      }),
+
     setForceFetchOnSelect: (state, action: TabAction<Pick<TabState, 'forceFetchOnSelect'>>) =>
       withTab(state, action.payload, (tab) => {
         tab.forceFetchOnSelect = action.payload.forceFetchOnSelect;
@@ -330,6 +338,11 @@ export const internalStateSlice = createSlice({
         syncProfileStateSnapshot(tab, action.payload.profileId, action.payload.appState);
       }),
 
+    setProfileState: (state, action: TabAction<{ key: string; profileState: object }>) =>
+      withTab(state, action.payload, (tab) => {
+        tab.profileState[action.payload.key] = action.payload.profileState;
+      }),
+
     /**
      * Set the tab app state and previous app state, overwriting existing state and pushing to URL history
      */
@@ -409,6 +422,17 @@ export const internalStateSlice = createSlice({
           };
         }),
     },
+
+    setProfileStateFieldsToResetWithoutResetId: (
+      state,
+      action: TabAction<Pick<TabState['defaultProfileState'], 'fieldsToReset'>>
+    ) =>
+      withTab(state, action.payload, (tab) => {
+        tab.defaultProfileState = {
+          ...tab.defaultProfileState,
+          fieldsToReset: action.payload.fieldsToReset,
+        };
+      }),
 
     resetOnSavedSearchChange: (state, action: TabAction) =>
       withTab(state, action.payload, (tab) => {
@@ -498,6 +522,27 @@ export const internalStateSlice = createSlice({
       withTab(state, action.payload, (tab) => {
         tab.uiState.docViewer = action.payload.docViewerUiState;
       }),
+
+    setDataCascadeUiState: (
+      state,
+      action: TabAction<{ dataCascadeUiState: TabState['uiState']['dataCascade'] }>
+    ) =>
+      withTab(state, action.payload, (tab) => {
+        tab.uiState.dataCascade = action.payload.dataCascadeUiState;
+      }),
+
+    setCascadedDocumentsDataGridUiState: (
+      state,
+      action: TabAction<{
+        nodeId: string;
+        dataGridUiState: Partial<UnifiedDataTableRestorableState>;
+      }>
+    ) =>
+      withTab(state, action.payload, (tab) => {
+        tab.uiState.cascadedDocumentsDataGridMap ??= {};
+        tab.uiState.cascadedDocumentsDataGridMap[action.payload.nodeId] =
+          action.payload.dataGridUiState;
+      }),
   },
   extraReducers: (builder) => {
     builder.addCase(loadDataViewList.fulfilled, (state, action) => {
@@ -516,26 +561,34 @@ export const internalStateSlice = createSlice({
 
     builder.addCase(initializeSingleTab.pending, (state, action) =>
       withTab(state, action.meta.arg, (tab) => {
-        tab.initializationState = { initializationStatus: TabInitializationStatus.InProgress };
+        if (tab.initializationState.initializationStatus !== TabInitializationStatus.Disconnected) {
+          tab.initializationState = {
+            initializationStatus: TabInitializationStatus.InProgress,
+          };
+        }
       })
     );
 
     builder.addCase(initializeSingleTab.fulfilled, (state, action) =>
       withTab(state, action.meta.arg, (tab) => {
-        tab.initializationState = {
-          initializationStatus: action.payload.showNoDataPage
-            ? TabInitializationStatus.NoData
-            : TabInitializationStatus.Complete,
-        };
+        if (tab.initializationState.initializationStatus !== TabInitializationStatus.Disconnected) {
+          tab.initializationState = {
+            initializationStatus: action.payload.showNoDataPage
+              ? TabInitializationStatus.NoData
+              : TabInitializationStatus.Complete,
+          };
+        }
       })
     );
 
     builder.addCase(initializeSingleTab.rejected, (state, action) =>
       withTab(state, action.meta.arg, (tab) => {
-        tab.initializationState = {
-          initializationStatus: TabInitializationStatus.Error,
-          error: action.error,
-        };
+        if (tab.initializationState.initializationStatus !== TabInitializationStatus.Disconnected) {
+          tab.initializationState = {
+            initializationStatus: TabInitializationStatus.Error,
+            error: action.error,
+          };
+        }
       })
     );
 
@@ -627,7 +680,7 @@ const createMiddleware = (options: InternalStateDependencies) => {
   startListening({
     actionCreator: discardFlyoutsOnTabChange,
     effect: () => {
-      dismissFlyouts([DiscoverFlyouts.lensEdit, DiscoverFlyouts.metricInsights]);
+      dismissFlyouts([DiscoverFlyouts.lensEdit]);
     },
   });
 
@@ -677,6 +730,7 @@ export interface InternalStateDependencies {
   tabsStorageManager: TabsStorageManager;
   searchSessionManager: DiscoverSearchSessionManager;
   getInternalState$: () => Observable<DiscoverInternalState>;
+  getContextAwarenessToolkit: (tabId: string) => ContextAwarenessToolkit;
   getCascadedDocumentsStateManager: (tabId: string) => CascadedDocumentsStateManager;
 }
 
@@ -698,11 +752,21 @@ const serializableCheckOptions: SerializableStateInvariantMiddlewareOptions = {
 };
 
 export const createInternalStateStore = (
-  options: Omit<InternalStateDependencies, 'getInternalState$' | 'getCascadedDocumentsStateManager'>
+  options: Omit<
+    InternalStateDependencies,
+    'getInternalState$' | 'getContextAwarenessToolkit' | 'getCascadedDocumentsStateManager'
+  >
 ) => {
   const optionsWithStore: InternalStateDependencies = {
     ...options,
     getInternalState$: () => from(internalState),
+    getContextAwarenessToolkit: (tabId: string) => {
+      return createContextAwarenessToolkit({
+        internalState,
+        profileStateRegistry: options.services.profileStateRegistry,
+        tabId,
+      });
+    },
     getCascadedDocumentsStateManager: (tabId) => {
       return createCascadedDocumentsStateManager({
         internalState,

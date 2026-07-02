@@ -6,10 +6,10 @@
  */
 
 import { loggingSystemMock } from '@kbn/core-logging-server-mocks';
-import type { SmlListItem } from '@kbn/agent-builder-plugin/server';
+import type { SmlListItem } from '@kbn/agent-context-layer-plugin/server';
 import { visualizationSmlType } from './visualization';
 
-jest.mock('@kbn/lens-embeddable-utils/config_builder', () => ({
+jest.mock('@kbn/lens-embeddable-utils', () => ({
   LensConfigBuilder: jest.fn().mockImplementation(() => ({
     toAPIFormat: jest.fn().mockReturnValue({ type: 'lnsXY', layers: [] }),
   })),
@@ -153,7 +153,7 @@ describe('visualizationSmlType', () => {
   });
 
   describe('getSmlData', () => {
-    it('returns chunk with correct type, title, content, permissions', async () => {
+    it('returns chunk with correct type, title, content (permissions are handled by getPermissions)', async () => {
       const savedObject = {
         id: 'viz-1',
         type: 'lens',
@@ -186,10 +186,10 @@ describe('visualizationSmlType', () => {
             type: 'visualization',
             title: 'My Visualization',
             content: 'My Visualization\nA test viz\nlnsXY\nFROM test',
-            permissions: ['saved_object:lens/get'],
           },
         ],
       });
+      expect(result!.chunks[0]).not.toHaveProperty('permissions');
     });
 
     it('content includes title, description, chartType, esql joined by newline', async () => {
@@ -258,7 +258,16 @@ describe('visualizationSmlType', () => {
         type: 'visualization',
         title: 'Minimal Viz',
         content: 'Minimal Viz\nlnsXY',
-        permissions: ['saved_object:lens/get'],
+      });
+    });
+  });
+
+  describe('getPermissions', () => {
+    it('returns the saved_object:lens/get privilege (via kibanaSavedObjectPermissions helper)', () => {
+      const permissions = visualizationSmlType.getPermissions!('viz-1', createContext() as never);
+      expect(permissions).toEqual({
+        kibana: { privileges: [{ name: 'saved_object:lens/get' }] },
+        elasticsearch: { indices: [] },
       });
     });
   });
@@ -372,7 +381,7 @@ describe('visualizationSmlType', () => {
     });
 
     it('uses LensConfigBuilder to convert attributes', async () => {
-      const { LensConfigBuilder } = jest.requireMock('@kbn/lens-embeddable-utils/config_builder');
+      const { LensConfigBuilder } = jest.requireMock('@kbn/lens-embeddable-utils');
       const toAPIFormatMock = jest.fn().mockReturnValue({
         type: 'lnsPie',
         layers: [{ id: 'layer1' }],

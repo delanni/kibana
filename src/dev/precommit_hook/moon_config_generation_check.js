@@ -60,16 +60,18 @@ export class MoonConfigGenerationCheck extends PrecommitCheck {
     log.debug(`Regenerating moon config for projects: ${affectedProjects.join(', ')}`);
 
     try {
+      if (!process.argv[1]) {
+        process.argv[1] = path.join(REPO_ROOT, 'scripts/precommit_hook.js');
+      }
       await import('@kbn/setup-node-env');
-      const { regenerateMoonProjects } = await import('@kbn/moon');
+      const { regenerateMoonProjects } = require('@kbn/moon');
       const results = await regenerateMoonProjects({
         filter: affectedProjects,
         update: true,
         dryRun: !options.fix,
         clear: false,
         includeDependencies: true,
-        quiet: true,
-        // log: new ToolingLog({ level: 'verbose', writeTo: process.stdout }), // to debug
+        log,
       });
 
       const touchedFiles = results.update.concat(results.create);

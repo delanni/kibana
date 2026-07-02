@@ -9,6 +9,7 @@ import type {
   ByteSize,
   IndicesDataStream,
   IndicesDataStreamsStatsDataStreamsStatsItem,
+  HealthStatus,
   Metadata,
   IndicesDataStreamIndex,
   IndicesDataStreamLifecycleWithRollover,
@@ -34,7 +35,7 @@ export type HealthFromEs = 'GREEN' | 'YELLOW' | 'RED';
 
 export type DataStreamIndexFromEs = IndicesDataStreamIndex;
 
-export type Health = 'green' | 'yellow' | 'red';
+export type Health = Lowercase<HealthStatus>;
 
 export type IndexMode = (typeof IndexMode)[keyof typeof IndexMode];
 
@@ -109,6 +110,11 @@ export interface DataRetention {
   infiniteDataRetention?: boolean;
   value?: number;
   unit?: string;
+  frozen?: {
+    enabled: boolean;
+    value?: number;
+    unit?: string;
+  };
 }
 
 export interface DataStreamOptions {

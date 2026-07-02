@@ -11,8 +11,10 @@ import { schema } from '@kbn/config-schema';
 import type { CoreSetup } from '@kbn/core/server';
 import { i18n } from '@kbn/i18n';
 import {
-  WORKFLOWS_AI_AGENT_SETTING_ID,
+  WORKFLOWS_EXPERIMENTAL_FEATURES_SETTING_ID,
   WORKFLOWS_UI_SETTING_ID,
+  WORKFLOWS_UI_SHOW_MANAGED_WORKFLOWS_SETTING_ID,
+  WORKFLOWS_VERSIONING_SETTING_ID,
 } from '@kbn/workflows/common/constants';
 import type { WorkflowsServerPluginSetupDeps } from './types';
 import { WORKFLOWS_DOCUMENTATION_URL } from '../common';
@@ -47,33 +49,63 @@ export const registerUISettings = (
         defaultMessage: 'Elastic Workflows',
       }),
       schema: schema.boolean(),
-      value: false,
+      value: true,
       readonly: false,
-      technicalPreview: true,
       requiresPageReload: true,
-      category: ['general'],
+      category: ['workflows'],
     },
-    [WORKFLOWS_AI_AGENT_SETTING_ID]: {
-      description: i18n.translate('workflowsManagement.uiSettings.aiAgent.description', {
-        defaultMessage:
-          'Enables AI-powered workflow authoring experiences. {licenseText} {learnMoreLink}',
-        values: {
-          learnMoreLink: `<a href="${WORKFLOWS_DOCUMENTATION_URL}" target="_blank" rel="noreferrer noopener">${i18n.translate(
-            'workflowsManagement.uiSettings.aiAgent.learnMore',
-            { defaultMessage: 'Learn more' }
-          )}</a>.`,
-          licenseText,
-        },
-      }),
-      name: i18n.translate('workflowsManagement.uiSettings.aiAgent.name', {
-        defaultMessage: 'Elastic Workflows: AI agent authoring',
+    [WORKFLOWS_UI_SHOW_MANAGED_WORKFLOWS_SETTING_ID]: {
+      description: i18n.translate(
+        'workflowsManagement.uiSettings.showManagedWorkflows.description',
+        {
+          defaultMessage:
+            'Allows users with the required workflow privileges to display managed workflows and their executions in workflow experiences. ' +
+            'Managed workflows are maintained by Elastic and power certain functionality. ' +
+            'Editing, disabling, or deleting them may cause unexpected behavior or break product functionality.',
+        }
+      ),
+      name: i18n.translate('workflowsManagement.uiSettings.showManagedWorkflows.name', {
+        defaultMessage: 'Show managed workflows',
       }),
       schema: schema.boolean(),
       value: false,
       readonly: false,
-      technicalPreview: true,
+      category: ['workflows'],
+    },
+    [WORKFLOWS_EXPERIMENTAL_FEATURES_SETTING_ID]: {
+      description: i18n.translate(
+        'workflowsManagement.uiSettings.experimentalFeatures.description',
+        {
+          defaultMessage: 'Enables experimental features for Elastic Workflows.',
+        }
+      ),
+      name: i18n.translate('workflowsManagement.uiSettings.experimentalFeatures.name', {
+        defaultMessage: 'Elastic Workflows: Experimental Features',
+      }),
+      schema: schema.boolean(),
+      value: false,
+      experimental: true,
       requiresPageReload: true,
-      category: ['general'],
+      readonly: false,
+      category: ['workflows'],
+    },
+  });
+
+  uiSettings.registerGlobal({
+    [WORKFLOWS_VERSIONING_SETTING_ID]: {
+      name: i18n.translate('workflowsManagement.uiSettings.changeHistory.name', {
+        defaultMessage: 'Workflow version history',
+      }),
+      description: i18n.translate('workflowsManagement.uiSettings.changeHistory.description', {
+        defaultMessage:
+          'Internal gate for workflow version history (change-history writes and read routes).',
+      }),
+      schema: schema.boolean(),
+      value: false,
+      readonly: true,
+      readonlyMode: 'ui',
+      requiresPageReload: true,
+      scope: 'global',
     },
   });
 };

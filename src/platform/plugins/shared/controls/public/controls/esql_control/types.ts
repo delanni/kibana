@@ -11,24 +11,39 @@ import type {
   OptionsListSearchTechnique,
 } from '@kbn/controls-schemas';
 import type { DefaultEmbeddableApi } from '@kbn/embeddable-plugin/public';
-import type { PublishesESQLVariable } from '@kbn/esql-types';
+import type { PublishesESQLVariable, QueryESQLControl, StaticESQLControl } from '@kbn/esql-types';
 import type {
   HasEditCapabilities,
   HasType,
   HasUniqueId,
   PublishesDataLoading,
+  PublishesUnsavedChanges,
   PublishingSubject,
+  PublishesESQLQuery,
+  CanIndicateRelatedSiblings,
+  PublishesRelatedPanels,
 } from '@kbn/presentation-publishing';
 import type { SettersOf, SubjectsOf } from '@kbn/presentation-publishing/state_manager/types';
+import type { PublishesTooltipLabel } from '@kbn/controls-schemas/src/types';
 import type { TemporaryState } from '../data_controls/options_list_control/temporay_state_manager';
 import type { OptionsListPublishesOptions, OptionsListSelectionsApi } from '../types';
 import type { initializeLabelManager } from '../control_labels';
 
-export type ESQLControlApi = DefaultEmbeddableApi<OptionsListESQLControlState> &
+export type ESQLControlApi<State> = DefaultEmbeddableApi<
+  State extends { control_type: 'STATIC_VALUES' } ? StaticESQLControl : QueryESQLControl
+> &
   PublishesESQLVariable &
+  PublishesESQLQuery &
+  PublishesUnsavedChanges &
+  PublishesRelatedPanels &
   HasEditCapabilities &
   PublishesDataLoading &
+  PublishesTooltipLabel &
+  CanIndicateRelatedSiblings &
   ReturnType<typeof initializeLabelManager>['api'];
+
+export type ESQLOptionsListRuntimeState = Omit<OptionsListESQLControlState, 'available_options'> &
+  Pick<StaticESQLControl, 'available_options'>; // both types have `available_options` during runtime
 
 export type ESQLOptionsListComponentState = Pick<
   OptionsListESQLControlState,
@@ -43,6 +58,7 @@ export type ESQLOptionsListComponentState = Pick<
 
 export type ESQLOptionsListComponentApi = HasType &
   HasUniqueId &
+  PublishesTooltipLabel &
   OptionsListPublishesOptions<string> &
   SubjectsOf<ESQLOptionsListComponentState> &
   SettersOf<

@@ -16,7 +16,7 @@
     "package.json",
     "../../../../../typings/**/*",
     "test/scout/**/*",
-    "test/scout_automatic_import_v2/**/*"
+    "test/scout_automatic_import/**/*"
   ],
   "kbn_references": [
     "@kbn/core",
@@ -48,6 +48,7 @@
     "@kbn/custom-integrations-plugin",
 
     // packages
+    "@kbn/deeplinks-management",
     "@kbn/core-application-common",
     "@kbn/core-capabilities-common",
     "@kbn/i18n",
@@ -108,7 +109,6 @@
     "@kbn/test-jest-helpers",
     "@kbn/core-saved-objects-utils-server",
     "@kbn/automatic-import-plugin",
-    "@kbn/automatic-import-v2-plugin",
     "@kbn/core-security-server-mocks",
     "@kbn/server-http-tools",
     "@kbn/zod",
@@ -123,7 +123,7 @@
     "@kbn/core-di",
     "@kbn/licensing-types",
     "@kbn/alerting-plugin",
-    "@kbn/spaces-utils",
+    "@kbn/core-spaces-common",
     "@kbn/setup-node-env",
     "@kbn/react-query",
     "@kbn/fs",
@@ -135,6 +135,11 @@
     "@kbn/css-utils",
     "@kbn/rison",
     "@kbn/rule-data-utils",
-    "@kbn/doc-links"
+    "@kbn/doc-links",
+    "@kbn/yaml-loader",
+    "@kbn/charts-theme",
+    "@kbn/search-types",
+    "@kbn/human-readable-id",
+    "@kbn/elastic-agent-condition-language"
   ]
 }

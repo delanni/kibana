@@ -9,9 +9,18 @@
 
 import type { RefObject } from 'react';
 
-import type { DATE_TYPE_ABSOLUTE, DATE_TYPE_RELATIVE, DATE_TYPE_NOW } from './constants';
+import type {
+  DATE_TYPE_ABSOLUTE,
+  DATE_TYPE_RELATIVE,
+  DATE_TYPE_NOW,
+  MODIFICATION_INCREASE,
+  MODIFICATION_DECREASE,
+} from './constants';
 
 export type DateType = typeof DATE_TYPE_ABSOLUTE | typeof DATE_TYPE_RELATIVE | typeof DATE_TYPE_NOW;
+
+/** Direction an arrow key steps a selected range part. */
+export type ModificationAction = typeof MODIFICATION_INCREASE | typeof MODIFICATION_DECREASE;
 
 /** Canonical date-math time units */
 export type TimeUnit = 'ms' | 's' | 'm' | 'h' | 'd' | 'w' | 'M' | 'y';
@@ -97,16 +106,13 @@ export interface AutoRefreshSettings {
    * When `isEnabled` is true, whether the refresh interval timer is running (`false`) or paused (`true`).
    */
   isPaused: boolean;
-  /**
-   * Refresh interval in milliseconds.
-   * @default 10000
-   */
-  interval: number;
+  /** Refresh interval in milliseconds. */
+  intervalMs: number;
   /**
    * The unit used to display the interval count in the Settings panel.
-   * Auto-determined from `interval` when absent.
+   * Auto-determined from `intervalMs` when absent.
    */
-  intervalUnit?: AutoRefreshIntervalUnit;
+  intervalDisplayUnit: AutoRefreshIntervalUnit;
 }
 
 /** Controls sub-minute precision shown in absolute timestamps. */

@@ -5,21 +5,16 @@
  * 2.0.
  */
 
-import type { FeatureWithFilter } from '@kbn/streams-schema';
+import type { FeatureWithFilter } from '@kbn/significant-events-schema';
 import type { Condition } from '@kbn/streamlang';
 
-export const MAX_FILTERS = 10;
-
-export function getEntityFilters(
-  features: FeatureWithFilter[],
-  maxFilters = MAX_FILTERS
-): Condition[] {
+export function getEntityFilters(features: FeatureWithFilter[], maxFilters: number): Condition[] {
   if (features.length === 0) {
     return [];
   }
 
   const capped = [...features]
-    .sort((a, b) => b.last_seen.localeCompare(a.last_seen))
+    .sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? ''))
     .slice(0, maxFilters);
   return capped.map(({ filter }) => filter);
 }

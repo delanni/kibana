@@ -62,6 +62,7 @@ export interface InstalledPackage {
   title?: string;
   description?: string;
   icons?: PackageSpecIcon[];
+  rolledBack?: boolean;
 }
 export interface GetInstalledPackagesResponse {
   items: InstalledPackage[];
@@ -105,6 +106,7 @@ export interface UpdatePackageRequest {
   };
   body: {
     keepPoliciesUpToDate?: boolean;
+    namespace_customization_enabled_for?: string[];
   };
 }
 
@@ -124,6 +126,10 @@ export interface GetStatsRequest {
 
 export interface GetStatsResponse {
   response: PackageUsageStats;
+}
+
+export interface GetDependenciesResponse {
+  items: Array<{ name: string; version: string; title: string }>;
 }
 
 export interface InstallPackageRequest {

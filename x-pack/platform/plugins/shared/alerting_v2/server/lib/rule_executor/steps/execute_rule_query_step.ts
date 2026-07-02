@@ -6,6 +6,9 @@
  */
 
 import { inject, injectable } from 'inversify';
+import { getBreachEsqlQuery } from '@kbn/alerting-v2-schemas';
+import { createTaskRunError, TaskErrorSource } from '@kbn/task-manager-plugin/server';
+import { isEsqlUserError } from '../../errors/esql_user_error';
 import type { PipelineStateStream, RuleExecutionStep } from '../types';
 import { getQueryPayload } from '../get_query_payload';
 import {
@@ -13,22 +16,8 @@ import {
   type LoggerServiceContract,
 } from '../../services/logger_service/logger_service';
 import type { QueryServiceContract } from '../../services/query_service/query_service';
-import { QueryServiceScopedToken } from '../../services/query_service/tokens';
+import { QueryServiceScopedSpaceRoutingToken } from '../../services/query_service/tokens';
 import { guardedExpandStep } from '../stream_utils';
-
-/**
- * Returns the query to execute for this rule.
- *
- * Currently only `evaluation.query.base` is used. The separate
- * `evaluation.query.condition` exists to support no-data detection
- * in the future (the executor will need to run the base query *without*
- * the trigger condition to distinguish "no data at all" from "data exists
- * but doesn't match the condition"). That is not yet implemented, so the
- * trigger condition is expected to be embedded in the base query for now.
- */
-function buildEffectiveQuery(evaluationQuery: { base: string }): string {
-  return evaluationQuery.base.trimEnd();
-}
 
 @injectable()
 export class ExecuteRuleQueryStep implements RuleExecutionStep {
@@ -36,7 +25,7 @@ export class ExecuteRuleQueryStep implements RuleExecutionStep {
 
   constructor(
     @inject(LoggerServiceToken) private readonly logger: LoggerServiceContract,
-    @inject(QueryServiceScopedToken) private readonly queryService: QueryServiceContract
+    @inject(QueryServiceScopedSpaceRoutingToken) private readonly queryService: QueryServiceContract
   ) {}
 
   public executeStream(streamState: PipelineStateStream): PipelineStateStream {
@@ -45,7 +34,7 @@ export class ExecuteRuleQueryStep implements RuleExecutionStep {
     return guardedExpandStep(streamState, ['rule'], async function* (state) {
       const { input, rule } = state;
 
-      const effectiveQuery = buildEffectiveQuery(rule.evaluation.query);
+      const effectiveQuery = getBreachEsqlQuery(rule.query);
       const lookbackWindow = rule.schedule.lookback ?? rule.schedule.every;
       const timeField = rule.time_field;
 
@@ -64,28 +53,35 @@ export class ExecuteRuleQueryStep implements RuleExecutionStep {
           })}`,
       });
 
-      const esqlRowBatchStream = step.queryService.executeQueryStream({
-        query: effectiveQuery,
-        filter: queryPayload.filter,
-        params: queryPayload.params,
-        abortSignal: input.executionContext.signal,
-      });
+      try {
+        const esqlRowBatchStream = step.queryService.executeQueryStream({
+          query: effectiveQuery,
+          filter: queryPayload.filter,
+          params: queryPayload.params,
+          abortSignal: input.executionContext.signal,
+        });
 
-      let yielded = false;
+        let yielded = false;
 
-      for await (const batch of esqlRowBatchStream) {
-        yielded = true;
-        yield {
-          type: 'continue',
-          state: { ...state, queryPayload, esqlRowBatch: batch },
-        };
-      }
+        for await (const batch of esqlRowBatchStream) {
+          yielded = true;
+          yield {
+            type: 'continue',
+            state: { ...state, queryPayload, esqlRowBatch: batch },
+          };
+        }
 
-      if (!yielded) {
-        yield {
-          type: 'continue',
-          state: { ...state, queryPayload, esqlRowBatch: [] },
-        };
+        if (!yielded) {
+          yield {
+            type: 'continue',
+            state: { ...state, queryPayload, esqlRowBatch: [] },
+          };
+        }
+      } catch (error) {
+        if (isEsqlUserError(error)) {
+          throw createTaskRunError(error as Error, TaskErrorSource.USER);
+        }
+        throw error;
       }
     });
   }

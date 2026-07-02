@@ -8,8 +8,12 @@
 import { z } from '@kbn/zod/v4';
 import type { CommonStepDefinition } from '@kbn/workflows-extensions/common';
 import { StepCategory } from '@kbn/workflows';
-import { JsonModelShapeSchema } from '@kbn/workflows/spec/schema/common/json_model_shape_schema';
+import { JsonModelSchema } from '@kbn/workflows/spec/schema/common/json_model_schema';
 import { i18n } from '@kbn/i18n';
+import {
+  CONNECTOR_OR_INFERENCE_ID_CONFLICT_MESSAGE_WORKFLOW,
+  normalizeOptionalConnectorOrInferenceParam,
+} from '../resolve_connector_or_inference_id';
 
 /**
  * Step type ID for the agentBuilder run agent step.
@@ -23,8 +27,7 @@ export const InputSchema = z.object({
   /**
    * output schema for the run agent step, if provided agent will return structured output
    */
-  // TODO: replace with proper JsonSchema7 zod schema when https://github.com/elastic/kibana/pull/244223 is merged and released
-  schema: JsonModelShapeSchema.optional().describe('The schema for the output of the agent.'),
+  schema: JsonModelSchema.optional().describe('The schema for the output of the agent.'),
   /**
    * The user input message to send to the agent.
    */
@@ -92,35 +95,105 @@ export const OutputSchema = z.object({
     .describe(
       'Conversation ID associated with this step execution. Present when create_conversation is enabled or conversation_id is provided.'
     ),
+  metadata: z
+    .object({
+      usage: z.object({
+        inputTokens: z.number().describe('Total input tokens consumed across all LLM rounds.'),
+        outputTokens: z.number().describe('Total output tokens produced across all LLM rounds.'),
+        totalTokens: z.number().describe('Sum of input and output tokens across all LLM rounds.'),
+      }),
+    })
+    .describe('Step execution metadata, including token usage across all LLM rounds.')
+    .optional(),
 });
+
+/**
+ * Validation message shown when `aggregate-by` is set without a `plugin-id`. The parent
+ * rollup id (`aggregateBy`) is only meaningful alongside the billing attribution id (`pluginId`).
+ */
+export const AGGREGATE_BY_REQUIRES_PLUGIN_ID_MESSAGE =
+  '`aggregate-by` can only be set when `plugin-id` is also set.';
 
 /**
  * Config schema for the run agent step.
  */
-export const ConfigSchema = z.object({
-  /**
-   * The ID of the agent to chat with. Defaults to the default Elastic AI agent.
-   */
-  'agent-id': z
-    .string()
-    .optional()
-    .describe('The ID of the agent to chat with. Defaults to the default Elastic AI agent.'),
-  /**
-   * The ID of the GenAI connector to use. Defaults to the default GenAI connector.
-   */
-  'connector-id': z
-    .string()
-    .optional()
-    .describe('The ID of the connector to use. Defaults to the default GenAI connector.'),
-  /**
-   * When true, create/persist a conversation and associate it with the executing user.
-   * If conversation_id is provided, this can auto-create the conversation with that id if it does not exist.
-   */
-  'create-conversation': z
-    .boolean()
-    .optional()
-    .describe('When true, creates a conversation for the step.'),
-});
+export const ConfigSchema = z
+  .object({
+    /**
+     * The ID of the agent to chat with. Defaults to the default Elastic AI agent.
+     */
+    'agent-id': z
+      .string()
+      .optional()
+      .describe('The ID of the agent to chat with. Defaults to the default Elastic AI agent.'),
+    /**
+     * The ID of the connector to use for model routing. Mutually exclusive with `inference-id`.
+     */
+    'connector-id': z
+      .string()
+      .optional()
+      .describe(
+        'The ID of the connector to use. Defaults to the default GenAI connector. Mutually exclusive with `inference-id`.'
+      ),
+    /**
+     * Inference endpoint ID for model routing (alias for the same internal id as connector-id).
+     */
+    'inference-id': z
+      .string()
+      .optional()
+      .describe(
+        'The inference endpoint ID to use. Mutually exclusive with `connector-id`; defaults apply when both are omitted.'
+      ),
+    /**
+     * When true, create/persist a conversation and associate it with the executing user.
+     * If conversation_id is provided, this can auto-create the conversation with that id if it does not exist.
+     */
+    'create-conversation': z
+      .boolean()
+      .optional()
+      .describe('When true, creates a conversation for the step.'),
+    /**
+     * Connector telemetry feature id used to attribute this step's LLM calls for billing
+     * (sets `metadata.connectorTelemetry.pluginId`). When omitted, the default Agent Builder
+     * attribution is used.
+     */
+    'plugin-id': z
+      .string()
+      .max(255)
+      .optional()
+      .describe(
+        "The feature id to attribute this step's LLM calls to for billing (connector telemetry pluginId)."
+      ),
+    /**
+     * Parent feature id used to roll up this step's LLM token usage under a parent feature
+     * (sets `metadata.connectorTelemetry.aggregateBy`). Only used when `plugin-id` is set.
+     */
+    'aggregate-by': z
+      .string()
+      .max(255)
+      .optional()
+      .describe(
+        "The parent feature id to group this step's LLM token usage under (connector telemetry aggregateBy)."
+      ),
+  })
+  .superRefine((cfg, ctx) => {
+    const connector = normalizeOptionalConnectorOrInferenceParam(cfg['connector-id']);
+    const inference = normalizeOptionalConnectorOrInferenceParam(cfg['inference-id']);
+    if (connector !== undefined && inference !== undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: CONNECTOR_OR_INFERENCE_ID_CONFLICT_MESSAGE_WORKFLOW,
+        path: ['connector-id'],
+      });
+    }
+    if (cfg['aggregate-by'] !== undefined && cfg['plugin-id'] === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: AGGREGATE_BY_REQUIRES_PLUGIN_ID_MESSAGE,
+        path: ['aggregate-by'],
+      });
+    }
+  });
 
 export type RunAgentStepInputSchema = typeof InputSchema;
 export type RunAgentStepOutputSchema = typeof OutputSchema;
@@ -166,6 +239,15 @@ export const runAgentStepCommonDefinition: CommonStepDefinition<
   agent-id: "my-custom-agent"
   with:
     message: "{{ workflow.input.message }}"
+\`\`\``,
+
+      `## Use an inference endpoint (mutually exclusive with connector-id)
+\`\`\`yaml
+- name: run_with_inference
+  type: ${RunAgentStepTypeId}
+  inference-id: "my-inference-endpoint-id"
+  with:
+    message: "Summarize the findings."
 \`\`\``,
 
       `## Create a conversation and reuse it in a follow-up step

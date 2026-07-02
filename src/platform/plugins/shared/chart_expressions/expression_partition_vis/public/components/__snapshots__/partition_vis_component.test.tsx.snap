@@ -203,6 +203,7 @@ exports[`PartitionVisComponent should render correct structure for donut 1`] = `
               },
             ]
           }
+          footer="default"
           type="follow"
         />
         <Settings
@@ -419,6 +420,7 @@ exports[`PartitionVisComponent should render correct structure for donut 1`] = `
                   "#D9C6EF",
                 ],
                 "fallbackBandColor": "#ECF1F9",
+                "fontFamily": "Inter, BlinkMacSystemFont, Helvetica, Arial, sans-serif",
                 "minHeight": 64,
                 "nonFiniteText": "N/A",
                 "textColor": "#1D2A3E",
@@ -696,6 +698,7 @@ exports[`PartitionVisComponent should render correct structure for donut 1`] = `
                 "border": "#E3E8F2",
                 "emptyBackground": "transparent",
                 "extraTextAlign": "right",
+                "fontFamily": "Inter, BlinkMacSystemFont, Helvetica, Arial, sans-serif",
                 "iconAlign": "right",
                 "minHeight": 64,
                 "minValueFontSize": 12,
@@ -1155,6 +1158,7 @@ exports[`PartitionVisComponent should render correct structure for mosaic 1`] = 
               },
             ]
           }
+          footer="default"
           type="follow"
         />
         <Settings
@@ -1371,6 +1375,7 @@ exports[`PartitionVisComponent should render correct structure for mosaic 1`] = 
                   "#D9C6EF",
                 ],
                 "fallbackBandColor": "#ECF1F9",
+                "fontFamily": "Inter, BlinkMacSystemFont, Helvetica, Arial, sans-serif",
                 "minHeight": 64,
                 "nonFiniteText": "N/A",
                 "textColor": "#1D2A3E",
@@ -1648,6 +1653,7 @@ exports[`PartitionVisComponent should render correct structure for mosaic 1`] = 
                 "border": "#E3E8F2",
                 "emptyBackground": "transparent",
                 "extraTextAlign": "right",
+                "fontFamily": "Inter, BlinkMacSystemFont, Helvetica, Arial, sans-serif",
                 "iconAlign": "right",
                 "minHeight": 64,
                 "minValueFontSize": 12,
@@ -2167,6 +2173,7 @@ exports[`PartitionVisComponent should render correct structure for multi-metric 
               },
             ]
           }
+          footer="default"
           type="follow"
         />
         <Settings
@@ -2383,6 +2390,7 @@ exports[`PartitionVisComponent should render correct structure for multi-metric 
                   "#D9C6EF",
                 ],
                 "fallbackBandColor": "#ECF1F9",
+                "fontFamily": "Inter, BlinkMacSystemFont, Helvetica, Arial, sans-serif",
                 "minHeight": 64,
                 "nonFiniteText": "N/A",
                 "textColor": "#1D2A3E",
@@ -2660,6 +2668,7 @@ exports[`PartitionVisComponent should render correct structure for multi-metric 
                 "border": "#E3E8F2",
                 "emptyBackground": "transparent",
                 "extraTextAlign": "right",
+                "fontFamily": "Inter, BlinkMacSystemFont, Helvetica, Arial, sans-serif",
                 "iconAlign": "right",
                 "minHeight": 64,
                 "minValueFontSize": 12,
@@ -3181,6 +3190,7 @@ exports[`PartitionVisComponent should render correct structure for pie 1`] = `
               },
             ]
           }
+          footer="default"
           type="follow"
         />
         <Settings
@@ -3397,6 +3407,7 @@ exports[`PartitionVisComponent should render correct structure for pie 1`] = `
                   "#D9C6EF",
                 ],
                 "fallbackBandColor": "#ECF1F9",
+                "fontFamily": "Inter, BlinkMacSystemFont, Helvetica, Arial, sans-serif",
                 "minHeight": 64,
                 "nonFiniteText": "N/A",
                 "textColor": "#1D2A3E",
@@ -3674,6 +3685,7 @@ exports[`PartitionVisComponent should render correct structure for pie 1`] = `
                 "border": "#E3E8F2",
                 "emptyBackground": "transparent",
                 "extraTextAlign": "right",
+                "fontFamily": "Inter, BlinkMacSystemFont, Helvetica, Arial, sans-serif",
                 "iconAlign": "right",
                 "minHeight": 64,
                 "minValueFontSize": 12,
@@ -4133,6 +4145,7 @@ exports[`PartitionVisComponent should render correct structure for treemap 1`] =
               },
             ]
           }
+          footer="default"
           type="follow"
         />
         <Settings
@@ -4349,6 +4362,7 @@ exports[`PartitionVisComponent should render correct structure for treemap 1`] =
                   "#D9C6EF",
                 ],
                 "fallbackBandColor": "#ECF1F9",
+                "fontFamily": "Inter, BlinkMacSystemFont, Helvetica, Arial, sans-serif",
                 "minHeight": 64,
                 "nonFiniteText": "N/A",
                 "textColor": "#1D2A3E",
@@ -4626,6 +4640,7 @@ exports[`PartitionVisComponent should render correct structure for treemap 1`] =
                 "border": "#E3E8F2",
                 "emptyBackground": "transparent",
                 "extraTextAlign": "right",
+                "fontFamily": "Inter, BlinkMacSystemFont, Helvetica, Arial, sans-serif",
                 "iconAlign": "right",
                 "minHeight": 64,
                 "minValueFontSize": 12,
@@ -5040,6 +5055,7 @@ exports[`PartitionVisComponent should render correct structure for waffle 1`] = 
               },
             ]
           }
+          footer="default"
           type="follow"
         />
         <Settings
@@ -5256,6 +5272,7 @@ exports[`PartitionVisComponent should render correct structure for waffle 1`] = 
                   "#D9C6EF",
                 ],
                 "fallbackBandColor": "#ECF1F9",
+                "fontFamily": "Inter, BlinkMacSystemFont, Helvetica, Arial, sans-serif",
                 "minHeight": 64,
                 "nonFiniteText": "N/A",
                 "textColor": "#1D2A3E",
@@ -5533,6 +5550,7 @@ exports[`PartitionVisComponent should render correct structure for waffle 1`] = 
                 "border": "#E3E8F2",
                 "emptyBackground": "transparent",
                 "extraTextAlign": "right",
+                "fontFamily": "Inter, BlinkMacSystemFont, Helvetica, Arial, sans-serif",
                 "iconAlign": "right",
                 "minHeight": 64,
                 "minValueFontSize": 12,

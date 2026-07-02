@@ -6,7 +6,11 @@
  */
 
 import { useQuery } from '@kbn/react-query';
-import { ALL_VALUE, type GetCompositeSLOResponse, type GetSLOResponse } from '@kbn/slo-schema';
+import {
+  ALL_VALUE,
+  type CompositeSLOWithSummaryResponse,
+  type GetSLOResponse,
+} from '@kbn/slo-schema';
 import { useKibana } from '../../../hooks/use_kibana';
 import type { CreateCompositeSLOForm } from '../types';
 
@@ -22,7 +26,7 @@ export function useFetchCompositeSlo(compositeSloId: string | undefined): Respon
   const { isLoading, isError, data } = useQuery({
     queryKey: ['fetchCompositeSlo', compositeSloId],
     queryFn: async ({ signal }) => {
-      const response = await http.get<GetCompositeSLOResponse>(
+      const response = await http.get<CompositeSLOWithSummaryResponse>(
         `/api/observability/slo_composites/${encodeURIComponent(compositeSloId!)}`,
         { signal }
       );
@@ -51,7 +55,7 @@ export function useFetchCompositeSlo(compositeSloId: string | undefined): Respon
 }
 
 function toFormValues(
-  response: GetCompositeSLOResponse,
+  response: CompositeSLOWithSummaryResponse,
   defMap: Map<string, { name: string; groupBy: string | string[] }>
 ): CreateCompositeSLOForm {
   return {

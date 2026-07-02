@@ -11,20 +11,17 @@ import type {
   SearchKnowledgeIndicatorsOutput,
 } from '@kbn/streams-ai';
 import type { Logger } from '@kbn/core/server';
-import type { FeatureClient } from '../../../lib/streams/feature/feature_client';
-import type { QueryClient } from '../../../lib/streams/assets/query/query_client';
+import type { KnowledgeIndicatorClient } from '../../../lib/streams/ki';
 import type { StreamsClient } from '../../../lib/streams/client';
 
 export async function searchKnowledgeIndicatorsToolHandler({
   streamsClient,
-  featureClient,
-  queryClient,
+  kiClient,
   logger,
   params,
 }: {
   streamsClient: StreamsClient;
-  featureClient: FeatureClient;
-  queryClient: QueryClient;
+  kiClient: KnowledgeIndicatorClient;
   logger: Logger;
   params: SearchKnowledgeIndicatorsInput;
 }): Promise<SearchKnowledgeIndicatorsOutput> {
@@ -32,26 +29,31 @@ export async function searchKnowledgeIndicatorsToolHandler({
     params,
     onFeatureFetchError: (streamName, error) => {
       const errorMessage =
-        error instanceof Error ? error.stack ?? error.message : String(error ?? 'Unknown error');
-      logger.debug(`search_kis: failed to fetch features for ${streamName}: ${errorMessage}`);
+        error instanceof Error ? error.stack || error.message : String(error ?? 'Unknown error');
+      logger.warn(
+        `ki_search: failed to fetch features for stream "${streamName}": ${errorMessage}`
+      );
     },
     getStreamNames: async () => {
       const streams = await streamsClient.listStreams();
       return streams.map((stream) => stream.name);
     },
-    getFeatures: async (streamName, { limit }) => {
-      // TODO: add support for semantic search to consume the search_text parameter
-      const result = await featureClient.getFeatures(streamName, {
-        limit,
-      });
+    getFeatures: async (streamName, { searchText, limit }) => {
+      const result = searchText
+        ? await kiClient.findFeatures(streamName, searchText, { limit })
+        : await kiClient.getFeatures(streamName, { limit });
       return result.hits;
     },
     getQueries: async (streamNames, search_text) => {
-      // findQueries uses the default search mode (hybrid when ELSER is available,
-      // keyword otherwise), giving the agent the best-available ranking.
+      // Include all queries regardless of rule-backing status so the agent
+      // sees freshly generated and STATS queries that haven't been promoted.
+      const filters = { ruleUnbacked: 'include' as const };
+
+      // findQueries uses the default search mode (hybrid with silent keyword
+      // fallback), giving the agent the best-available ranking.
       const links = search_text
-        ? await queryClient.findQueries(streamNames, search_text)
-        : await queryClient.getQueryLinks(streamNames);
+        ? await kiClient.findQueries(streamNames, search_text, filters)
+        : await kiClient.getQueryLinks(streamNames, filters);
 
       return links;
     },

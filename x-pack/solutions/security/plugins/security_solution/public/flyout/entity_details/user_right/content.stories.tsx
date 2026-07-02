@@ -10,8 +10,8 @@ import type { Meta } from '@storybook/react';
 import { EuiFlyout } from '@elastic/eui';
 import { TestProvider } from '@kbn/expandable-flyout/src/test/provider';
 import { StorybookProviders } from '../../../common/mock/storybook_providers';
-import { mockRiskScoreState } from '../../shared/mocks';
-import { mockObservedUser } from './mocks';
+import { mockEntityRiskScores, mockRiskScoreState } from '../../shared/mocks';
+import { mockObservedUser, mockEntityRecord } from './mocks';
 import { UserPanelContent } from './content';
 
 const riskScoreData = { ...mockRiskScoreState, data: [] };
@@ -37,6 +37,7 @@ export const Default = {
     <UserPanelContent
       observedUser={mockObservedUser}
       riskScoreState={riskScoreData}
+      entityRiskScores={mockEntityRiskScores}
       contextID={'test-user-details'}
       scopeId={'test-scopeId'}
       openDetailsPanel={() => {}}
@@ -55,6 +56,7 @@ export const IntegrationDisabled = {
     <UserPanelContent
       observedUser={mockObservedUser}
       riskScoreState={riskScoreData}
+      entityRiskScores={mockEntityRiskScores}
       contextID={'test-user-details'}
       scopeId={'test-scopeId'}
       openDetailsPanel={() => {}}
@@ -62,10 +64,12 @@ export const IntegrationDisabled = {
       onAssetCriticalityChange={() => {}}
       recalculatingScore={false}
       isPreviewMode={false}
+      entityRecord={mockEntityRecord}
+      entityStoreEntityId={mockEntityRecord.entity.id}
     />
   ),
 
-  name: 'integration disabled',
+  name: 'with graph visualization',
 };
 
 export const NoManagedData = {
@@ -73,6 +77,7 @@ export const NoManagedData = {
     <UserPanelContent
       observedUser={mockObservedUser}
       riskScoreState={riskScoreData}
+      entityRiskScores={mockEntityRiskScores}
       contextID={'test-user-details'}
       scopeId={'test-scopeId'}
       openDetailsPanel={() => {}}
@@ -114,6 +119,7 @@ export const NoObservedData = {
         },
       }}
       riskScoreState={riskScoreData}
+      entityRiskScores={mockEntityRiskScores}
       contextID={'test-user-details'}
       scopeId={'test-scopeId'}
       openDetailsPanel={() => {}}
@@ -155,6 +161,7 @@ export const Loading = {
         },
       }}
       riskScoreState={riskScoreData}
+      entityRiskScores={mockEntityRiskScores}
       contextID={'test-user-details'}
       scopeId={'test-scopeId'}
       openDetailsPanel={() => {}}

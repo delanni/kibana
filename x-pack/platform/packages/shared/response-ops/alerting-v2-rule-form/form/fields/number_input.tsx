@@ -20,6 +20,7 @@ export interface NumberInputProps {
   max?: number;
   step?: number;
   prepend?: string | React.ReactElement | Array<string | React.ReactElement>;
+  compressed?: boolean;
   'data-test-subj'?: string;
   id?: string;
   name?: string;
@@ -35,7 +36,7 @@ export interface NumberInputProps {
  * On blur, an empty or invalid value restores the last valid value.
  */
 export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
-  ({ value, onChange, validate, ...rest }, ref) => {
+  ({ value, onChange, validate, compressed, ...rest }, ref) => {
     const [localValue, setLocalValue] = useState<string>(String(value));
 
     useEffect(() => {
@@ -71,6 +72,7 @@ export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
     return (
       <EuiFieldNumber
         {...rest}
+        compressed={compressed}
         value={localValue}
         onChange={handleChange}
         onBlur={handleBlur}

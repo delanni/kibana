@@ -10,6 +10,8 @@ import { Routes, Route } from '@kbn/shared-ux-router';
 
 import type { Capabilities } from '@kbn/core-capabilities-common';
 import {
+  CUSTOM_HIGHLIGHTED_FIELDS_UI_EDIT_PRIVILEGES,
+  INVESTIGATION_GUIDE_UI_EDIT_PRIVILEGES,
   RULES_UI_EDIT_PRIVILEGE,
   RULES_UI_READ_PRIVILEGE,
 } from '@kbn/security-solution-features/constants';
@@ -21,15 +23,14 @@ import {
   ENABLE_DE_HEALTH_UI_SETTING,
   RULES_LANDING_PATH,
   RULES_PATH,
-  AI_RULE_CREATION_PATH,
   SecurityPageName,
 } from '../../common/constants';
 import { useIsExperimentalFeatureEnabled } from '../common/hooks/use_experimental_features';
 import { NotFoundPage } from '../app/404';
 import { RulesPage } from '../detection_engine/rule_management_ui/pages/rule_management';
 import { CreateRulePage } from '../detection_engine/rule_creation_ui/pages/rule_creation';
-import { AiRuleCreationPage } from '../detection_engine/rule_creation_ui/pages/ai_rule_creation/ai_rule_creation_page';
 import { RuleDetailsPage } from '../detection_engine/rule_details_ui/pages/rule_details';
+import { RuleChangesHistoryPage } from '../detection_engine/rule_details_ui/pages/rule_changes_history';
 import { EditRulePage } from '../detection_engine/rule_creation_ui/pages/rule_editing';
 import { useReadonlyHeader } from '../use_readonly_header';
 import { PluginTemplateWrapper } from '../common/components/plugin_template_wrapper';
@@ -114,8 +115,8 @@ const getRulesSubRoutes = (
     ? [
         {
           path: endpointExceptionsTabEnabled
-            ? `/rules/id/:detailName/:tabName(${RuleDetailTabs.overview}|${RuleDetailTabs.alerts}|${RuleDetailTabs.exceptions}|${RuleDetailTabs.endpointExceptions}|${RuleDetailTabs.executionResults}|${RuleDetailTabs.executionEvents})`
-            : `/rules/id/:detailName/:tabName(${RuleDetailTabs.overview}|${RuleDetailTabs.alerts}|${RuleDetailTabs.exceptions}|${RuleDetailTabs.executionResults}|${RuleDetailTabs.executionEvents})`,
+            ? `/rules/id/:detailName/:tabName(${RuleDetailTabs.overview}|${RuleDetailTabs.alerts}|${RuleDetailTabs.exceptions}|${RuleDetailTabs.endpointExceptions}|${RuleDetailTabs.executionResults})`
+            : `/rules/id/:detailName/:tabName(${RuleDetailTabs.overview}|${RuleDetailTabs.alerts}|${RuleDetailTabs.exceptions}|${RuleDetailTabs.executionResults})`,
           main: RuleDetailsTabGuard,
           exact: true,
         },
@@ -155,22 +156,23 @@ const getRulesSubRoutes = (
   ...(hasCapabilities(capabilities, RULES_UI_EDIT_PRIVILEGE)
     ? [
         {
-          path: '/rules/id/:detailName/edit',
-          main: EditRulePage,
-          exact: true,
-        },
-        {
           path: '/rules/create',
           main: withSecurityRoutePageWrapper(CreateRulePage, SecurityPageName.rulesCreate, {
             omitSpyRoute: true,
           }),
           exact: true,
         },
+      ]
+    : []),
+  ...(hasCapabilities(capabilities, [
+    RULES_UI_EDIT_PRIVILEGE,
+    [RULES_UI_READ_PRIVILEGE, INVESTIGATION_GUIDE_UI_EDIT_PRIVILEGES],
+    [RULES_UI_READ_PRIVILEGE, CUSTOM_HIGHLIGHTED_FIELDS_UI_EDIT_PRIVILEGES],
+  ])
+    ? [
         {
-          path: AI_RULE_CREATION_PATH,
-          main: withSecurityRoutePageWrapper(AiRuleCreationPage, SecurityPageName.aiRuleCreation, {
-            omitSpyRoute: true,
-          }),
+          path: '/rules/id/:detailName/edit',
+          main: EditRulePage,
           exact: true,
         },
       ]
@@ -188,6 +190,7 @@ const RulesContainerComponent: React.FC = () => {
   const isEndpointExceptionsMovedFFEnabled = useIsExperimentalFeatureEnabled(
     'endpointExceptionsMovedUnderManagement'
   );
+  const isRuleChangesHistoryEnabled = useIsExperimentalFeatureEnabled('ruleChangesHistoryEnabled');
 
   const subRoutes = useMemo(() => {
     return getRulesSubRoutes(capabilities, {
@@ -210,6 +213,11 @@ const RulesContainerComponent: React.FC = () => {
         <Route path="/rules" exact>
           <Redirect to={`/rules/${AllRulesTabs.management}`} />
         </Route>
+        {isRuleChangesHistoryEnabled && hasCapabilities(capabilities, RULES_UI_READ_PRIVILEGE) && (
+          <Route path="/rules/id/:ruleId/changes-history" exact>
+            <RuleChangesHistoryPage />
+          </Route>
+        )}
         {subRoutes}
         <Route component={NotFoundPage} />
         <SpyRoute pageName={SecurityPageName.rules} />

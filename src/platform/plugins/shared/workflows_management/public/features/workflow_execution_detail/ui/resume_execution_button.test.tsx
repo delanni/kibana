@@ -10,8 +10,8 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { useWorkflowsCapabilities } from '@kbn/workflows-ui';
+import { createMockWorkflowsCapabilities } from '@kbn/workflows-ui/mocks';
 import { ResumeExecutionButton } from './resume_execution_button';
-import { mockWorkflowsManagementCapabilities } from '../../../hooks/__mocks__/use_workflows_capabilities';
 import { TestWrapper } from '../../../shared/test_utils';
 import type { ContextOverrideData } from '../../../shared/utils/build_step_context_override/build_step_context_override';
 
@@ -19,17 +19,8 @@ jest.mock('@kbn/kibana-react-plugin/public', () => ({
   useKibana: jest.fn(),
 }));
 
-jest.mock('@kbn/workflows-ui', () => ({
-  ...jest.requireActual('@kbn/workflows-ui'),
-  useWorkflowsCapabilities: jest.fn(),
-}));
-
 jest.mock('@kbn/workflows/spec/lib/build_fields_zod_validator', () => ({
   convertJsonSchemaToZod: jest.fn(),
-}));
-
-jest.mock('../../../../common/lib/generate_sample_from_json_schema', () => ({
-  generateSampleFromJsonSchema: jest.fn(),
 }));
 
 const { convertJsonSchemaToZod } = jest.requireMock(
@@ -40,7 +31,10 @@ const { convertJsonSchemaToZod } = jest.requireMock(
 let capturedOnSubmit: ((params: { stepInputs: Record<string, unknown> }) => void) | undefined;
 let capturedContextOverride: ContextOverrideData | undefined;
 
-jest.mock('./resume_execution_modal', () => ({
+jest.mock('@kbn/workflows-ui', () => ({
+  ...jest.requireActual('@kbn/workflows-ui'),
+  useWorkflowsCapabilities: jest.fn(),
+  generateSampleFromJsonSchema: jest.fn(),
   ResumeExecutionModal: ({
     onSubmit,
     onClose,
@@ -91,9 +85,7 @@ describe('ResumeExecutionButton', () => {
         },
       },
     });
-    jest
-      .mocked(useWorkflowsCapabilities)
-      .mockReturnValue({ ...mockWorkflowsManagementCapabilities });
+    jest.mocked(useWorkflowsCapabilities).mockReturnValue(createMockWorkflowsCapabilities());
   });
 
   const renderComponent = (props = {}) =>
@@ -116,7 +108,7 @@ describe('ResumeExecutionButton', () => {
 
     it('disables the button when user lacks executeWorkflow capability', () => {
       jest.mocked(useWorkflowsCapabilities).mockReturnValue({
-        ...mockWorkflowsManagementCapabilities,
+        ...createMockWorkflowsCapabilities(),
         canExecuteWorkflow: false,
       });
       renderComponent();
@@ -262,6 +254,29 @@ describe('ResumeExecutionButton', () => {
         // Button must remain enabled so the user can retry
         expect(screen.getByTestId('provideActionButton')).not.toBeDisabled();
       });
+    });
+
+    it('re-enables the button when waitingStepExecutionId changes after a successful submit', async () => {
+      const { rerender } = render(
+        <TestWrapper>
+          <ResumeExecutionButton {...defaultProps} waitingStepExecutionId="wait-step-exec-1" />
+        </TestWrapper>
+      );
+      fireEvent.click(screen.getByTestId('provideActionButton'));
+      await waitFor(() => expect(capturedOnSubmit).toBeDefined());
+      act(() => {
+        capturedOnSubmit!({ stepInputs: { approved: true } });
+      });
+      await waitFor(() => {
+        expect(screen.getByTestId('provideActionButton')).toBeDisabled();
+      });
+
+      rerender(
+        <TestWrapper>
+          <ResumeExecutionButton {...defaultProps} waitingStepExecutionId="wait-step-exec-2" />
+        </TestWrapper>
+      );
+      expect(screen.getByTestId('provideActionButton')).not.toBeDisabled();
     });
   });
 });

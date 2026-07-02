@@ -7,7 +7,7 @@
 
 import type { ToolSelection } from '../tools';
 import type { UserIdAndName } from '../base/users';
-import type { AgentVisibility } from './visibility';
+import type { AgentAccessControl } from './access_control/types';
 
 /**
  * The type of an agent.
@@ -48,9 +48,9 @@ export interface AgentDefinition {
    */
   readonly: boolean;
   /**
-   * Visibility controls who can read and write this agent.
+   * Access control controls who can read, run, write, delete, and manage this agent.
    */
-  visibility?: AgentVisibility;
+  access_control?: AgentAccessControl;
   /**
    * Agent owner metadata.
    */
@@ -86,9 +86,7 @@ export interface AgentConfiguration {
    */
   instructions?: string;
   /**
-   * If set to true, the custom instructions will be used as a replacement for the system prompt instead of extending it.
-   *
-   * This will impact both the research and answer prompts. For custom per-step instructions, use the `research` and `answer` configuration fields instead.
+   * @deprecated does nothing anymore - agent no longer have specific instructions to override
    */
   replace_default_instructions?: boolean;
 
@@ -120,6 +118,13 @@ export interface AgentConfiguration {
   plugin_ids?: string[];
 
   /**
+   * Optional list of connector IDs associated with this agent.
+   * When set, SML search filters connector results to only those in this list.
+   * When undefined, all connectors remain visible (backward compatibility).
+   */
+  connector_ids?: string[];
+
+  /**
    * Custom configuration for the research step of the agent.
    */
   research?: AgentResearchStepConfiguration;
@@ -136,7 +141,7 @@ export interface AgentResearchStepConfiguration {
    */
   instructions?: string;
   /**
-   * If set to true, the custom instructions will be used as a replacement for the system prompt instead of extending it.
+   * @deprecated does nothing anymore - agent no longer have specific instructions to override
    */
   replace_default_instructions?: boolean;
 }
@@ -147,7 +152,7 @@ export interface AgentAnswerStepConfiguration {
    */
   instructions?: string;
   /**
-   * If set to true, the custom instructions will be used as a replacement for the system prompt instead of extending it.
+   * @deprecated does nothing anymore - agent no longer have specific instructions to override
    */
   replace_default_instructions?: boolean;
 }

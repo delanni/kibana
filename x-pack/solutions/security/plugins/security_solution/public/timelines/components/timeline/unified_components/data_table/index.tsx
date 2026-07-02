@@ -22,7 +22,7 @@ import type {
 import { useExpandableFlyoutApi } from '@kbn/expandable-flyout';
 import { useHistory } from 'react-router-dom';
 import { SECURITY_CELL_ACTIONS_DEFAULT } from '@kbn/ui-actions-plugin/common/trigger_ids';
-import { buildDataTableRecord } from '@kbn/discover-utils';
+import { documentFlyoutHistoryKey } from '../../../../../flyout_v2/shared/constants/flyout_history';
 import { cellActionRenderer } from '../../../../../flyout_v2/shared/components/cell_actions';
 import { useIsExperimentalFeatureEnabled } from '../../../../../common/hooks/use_experimental_features';
 import { JEST_ENVIRONMENT } from '../../../../../../common/constants';
@@ -57,8 +57,10 @@ import { TIMELINE_EVENT_DETAIL_ROW_ID } from '../../body/constants';
 import { DocumentEventTypes } from '../../../../../common/lib/telemetry/types';
 import { getTimelineRowTypeIndicator } from './get_row_indicator';
 import { isAttackDiscoveryRow } from './is_attack_discovery_row';
-import { DocumentFlyout } from '../../../../../flyout_v2/document';
+import { DocumentFlyoutWrapper } from '../../../../../flyout_v2/document/main/document_flyout_wrapper';
+import { AttackFlyoutWrapper } from '../../../../../flyout_v2/attack/main/attack_flyout_wrapper';
 import { flyoutProviders } from '../../../../../flyout_v2/shared/components/flyout_provider';
+import { useDefaultDocumentFlyoutProperties } from '../../../../../flyout_v2/shared/hooks/use_default_flyout_properties';
 
 const DataGridMemoized = React.memo(UnifiedDataTable);
 
@@ -125,6 +127,7 @@ export const TimelineDataTableComponent: React.FC<DataTableProps> = memo(
     const dispatch = useDispatch();
     const store = useStore();
     const history = useHistory();
+    const defaultFlyoutProperties = useDefaultDocumentFlyoutProperties();
 
     // Store context in state rather than creating object in provider value={} to prevent re-renders caused by a new object being created
     const [activeStatefulEventContext] = useState({
@@ -154,6 +157,7 @@ export const TimelineDataTableComponent: React.FC<DataTableProps> = memo(
     }, []);
 
     const { closeFlyout, openFlyout } = useExpandableFlyoutApi();
+
     useOnExpandableFlyoutClose({ callback: onCloseExpandableFlyout });
 
     const showTimeCol = useMemo(() => !!dataView && !!dataView.timeFieldName, [dataView]);
@@ -185,19 +189,31 @@ export const TimelineDataTableComponent: React.FC<DataTableProps> = memo(
     const handleOnEventDetailPanelOpened = useCallback(
       (eventData: DataTableRecord & TimelineItem) => {
         if (newFlyoutSystemEnabled) {
-          const hit: DataTableRecord = buildDataTableRecord(eventData.raw);
+          const isAttackRow = isAttackDiscoveryRow(eventData);
           overlays.openSystemFlyout(
             flyoutProviders({
               services,
               store,
               history,
-              children: <DocumentFlyout hit={hit} renderCellActions={cellActionRenderer} />,
+              children: isAttackRow ? (
+                <AttackFlyoutWrapper
+                  attackId={eventData._id}
+                  indexName={eventData.ecs._index ?? ''}
+                  onAttackUpdated={refetch}
+                />
+              ) : (
+                <DocumentFlyoutWrapper
+                  documentId={eventData._id}
+                  indexName={eventData.ecs._index}
+                  renderCellActions={cellActionRenderer}
+                  onAlertUpdated={refetch}
+                />
+              ),
             }),
             {
-              ownFocus: false,
-              resizable: true,
-              size: 's',
-              type: 'overlay',
+              ...defaultFlyoutProperties,
+              historyKey: documentFlyoutHistoryKey,
+              session: 'start',
             }
           );
         } else {
@@ -229,12 +245,14 @@ export const TimelineDataTableComponent: React.FC<DataTableProps> = memo(
         }
       },
       [
+        defaultFlyoutProperties,
         newFlyoutSystemEnabled,
         overlays,
         services,
         store,
         history,
         timelineId,
+        refetch,
         openFlyout,
         telemetry,
       ]

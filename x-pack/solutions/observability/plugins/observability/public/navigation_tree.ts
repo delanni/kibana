@@ -12,6 +12,7 @@ import { STACK_MANAGEMENT_NAV_ID, DATA_MANAGEMENT_NAV_ID } from '@kbn/deeplinks-
 import { combineLatest, map, of } from 'rxjs';
 import { AIChatExperience } from '@kbn/ai-assistant-common';
 import { AI_CHAT_EXPERIENCE_TYPE } from '@kbn/management-settings-ids';
+import { getAlertingV2ManagementNavPanel } from '@kbn/alerting-v2-utils';
 import type { Location } from 'history';
 import type { ObservabilityPublicPluginsStart } from './plugin';
 
@@ -42,16 +43,16 @@ function isEditingFromDashboard(
 }
 
 function createNavTree({
+  coreStart,
   streamsAvailable,
   showAiAssistant,
   isCloudEnabled,
-  showAlertingV2,
   ingestHubAvailable,
 }: {
+  coreStart: CoreStart;
   streamsAvailable?: boolean;
   showAiAssistant?: boolean;
   isCloudEnabled?: boolean;
-  showAlertingV2?: boolean;
   ingestHubAvailable?: boolean;
 }) {
   const navTree: NavigationTreeDefinition = {
@@ -79,27 +80,10 @@ function createNavTree({
       {
         link: 'workflows',
       },
-      showAlertingV2
-        ? {
-            id: 'alerting',
-            renderAs: 'panelOpener',
-            title: i18n.translate('xpack.observability.obltNav.alerts', {
-              defaultMessage: 'Alerts',
-            }),
-            icon: 'warning',
-            children: [
-              {
-                link: 'observability-overview:alerts',
-              },
-              {
-                link: 'observability-overview:alerts_v2',
-              },
-            ],
-          }
-        : {
-            link: 'observability-overview:alerts',
-            icon: 'warning',
-          },
+      {
+        link: 'observability-overview:alerts',
+        icon: 'warning',
+      },
       {
         link: 'observability-overview:cases',
         children: [
@@ -327,10 +311,6 @@ function createNavTree({
                 link: 'ml:indexDataVisualizer',
                 sideNavStatus: 'hidden',
               },
-              {
-                link: 'ml:indexDataVisualizerPage',
-                sideNavStatus: 'hidden',
-              },
             ],
           },
           {
@@ -340,6 +320,15 @@ function createNavTree({
             }),
             breadcrumbStatus: 'hidden',
             children: [
+              {
+                link: 'management:anomaly_detection',
+                title: i18n.translate(
+                  'xpack.observability.obltNav.ml.anomaly_detection.manage_jobs',
+                  {
+                    defaultMessage: 'Manage jobs',
+                  }
+                ),
+              },
               {
                 link: 'ml:anomalyExplorer',
               },
@@ -440,6 +429,10 @@ function createNavTree({
                   defaultMessage: 'Get started',
                 }),
               },
+              {
+                link: 'onboarding' as const,
+                sideNavStatus: 'hidden',
+              },
             ],
           }
         : {
@@ -448,6 +441,12 @@ function createNavTree({
             }),
             link: 'observabilityOnboarding' as const,
             icon: 'plusInCircle',
+            children: [
+              {
+                link: 'onboarding' as const,
+                sideNavStatus: 'hidden',
+              },
+            ],
           },
       {
         id: 'devTools',
@@ -557,24 +556,9 @@ function createNavTree({
                       link: 'cloud_connect' as const,
                     },
                   ]),
-              { link: 'monitoring' },
             ],
           },
-          ...(showAlertingV2
-            ? [
-                {
-                  id: 'v2_alerting_preview',
-                  title: i18n.translate('xpack.observability.obltNav.v2AlertingPreview', {
-                    defaultMessage: 'V2 Alerting Preview',
-                  }),
-                  renderAs: 'panelOpener' as const,
-                  children: [
-                    { link: 'management:rules' as const },
-                    { link: 'management:notification_policies' as const },
-                  ],
-                },
-              ]
-            : []),
+          ...getAlertingV2ManagementNavPanel(coreStart),
           {
             id: 'alerts_and_insights',
             title: i18n.translate('xpack.observability.obltNav.alertsAndInsights', {
@@ -600,6 +584,19 @@ function createNavTree({
             ],
           },
           {
+            id: 'cluster_performance',
+            title: i18n.translate('xpack.observability.obltNav.clusterPerformance', {
+              defaultMessage: 'Cluster performance',
+            }),
+            children: [
+              { link: 'monitoring' },
+              {
+                link: 'management:queryActivity',
+                badgeType: 'new',
+              },
+            ],
+          },
+          {
             id: 'management_ml',
             title: i18n.translate('xpack.observability.obltNav.machineLearning', {
               defaultMessage: 'Machine Learning',
@@ -610,6 +607,17 @@ function createNavTree({
               { link: 'management:analytics' },
               { link: 'management:trained_models' },
               { link: 'management:supplied_configurations' },
+            ],
+          },
+          {
+            id: 'management_model_management',
+            title: i18n.translate('xpack.observability.obltNav.modelManagement', {
+              defaultMessage: 'Model Management',
+            }),
+            children: [
+              { link: 'management:elastic_inference_service' },
+              { link: 'management:inference_endpoints' },
+              { link: 'management:model_settings' },
             ],
           },
           {
@@ -711,10 +719,10 @@ export const createDefinition = (
   ]).pipe(
     map(([{ status }, chatExperience, ingestHubAvailable]) =>
       createNavTree({
+        coreStart,
         streamsAvailable: status === 'enabled',
         showAiAssistant: chatExperience !== AIChatExperience.Agent,
         isCloudEnabled: pluginsStart.cloud?.isCloudEnabled,
-        showAlertingV2: Boolean(coreStart.application.capabilities.alertingVTwo),
         ingestHubAvailable,
       })
     )

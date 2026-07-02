@@ -249,7 +249,7 @@ export function SearchPlaygroundPageProvider({ getService }: FtrProviderContext)
         await testSubjects.setValue('secrets.apiKey-input', 'apiKey');
         await testSubjects.existOrFail('create-connector-flyout-save-btn');
         await testSubjects.click('create-connector-flyout-save-btn');
-        await testSubjects.existOrFail('euiToastHeader');
+        await testSubjects.existOrFail('euiToastHeader__title');
       },
       async clickCreateIndex() {
         await testSubjects.existOrFail('createIndexButton');
@@ -343,7 +343,7 @@ export function SearchPlaygroundPageProvider({ getService }: FtrProviderContext)
 
         expect(
           await (await testSubjects.find('manageConnectorsLink')).getAttribute('href')
-        ).to.contain('/app/management/insightsAndAlerting/triggersActionsConnectors/connectors/');
+        ).to.contain('/app/management/modelManagement/model_settings');
 
         await testSubjects.existOrFail('editContextPanel');
         await testSubjects.existOrFail('summarizationPanel');
@@ -495,7 +495,7 @@ export function SearchPlaygroundPageProvider({ getService }: FtrProviderContext)
         await testSubjects.existOrFail('manageConnectorsLink');
         await testSubjects.click('manageConnectorsLink');
         await browser.switchTab(1);
-        await testSubjects.existOrFail('edit-connector-flyout');
+        await testSubjects.existOrFail('modelSettingsPage');
         await browser.closeCurrentWindow();
         await browser.switchTab(0);
       },

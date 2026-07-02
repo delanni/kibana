@@ -8,10 +8,12 @@
  */
 
 import type { DataTableRecord } from '@kbn/discover-utils';
+import type { DocViewRenderProps } from '@kbn/unified-doc-viewer/types';
 import type { FunctionComponent } from 'react';
 import type React from 'react';
 import type { DataGridCellValueElementProps } from '@kbn/unified-data-table';
 import type { Query, TimeRange } from '@kbn/es-query';
+import type { KibanaExecutionContext } from '@kbn/core-execution-context-common';
 import type {
   ErrorsByTraceId,
   FocusedTraceWaterfallProps,
@@ -40,12 +42,20 @@ import type { FeaturesRegistry } from '../../../common';
 export interface ObservabilityStreamsFeatureRenderDeps {
   doc: DataTableRecord;
   dataView: DataView;
-  renderCpsWarning?: boolean;
+  cpsHasLinkedProjects?: boolean;
+}
+
+export interface ObservabilityStreamsFeatureRenderByStreamNameDeps {
+  streamName: string;
+  cpsHasLinkedProjects?: boolean;
 }
 
 export interface ObservabilityStreamsFeature {
   id: 'streams';
   renderFlyoutStreamField: (deps: ObservabilityStreamsFeatureRenderDeps) => JSX.Element;
+  renderFlyoutStreamFieldByStreamName: (
+    deps: ObservabilityStreamsFeatureRenderByStreamNameDeps
+  ) => JSX.Element;
   renderFlyoutStreamProcessingLink: (deps: ObservabilityStreamsFeatureRenderDeps) => JSX.Element;
 }
 
@@ -103,6 +113,7 @@ export interface ObservabilityLogEventsFeature {
       enableDocumentViewer: false;
       enableFilters: false;
     };
+    executionContext?: KibanaExecutionContext;
   }) => JSX.Element;
 }
 
@@ -115,20 +126,70 @@ export interface SecuritySolutionCellRendererFeature {
   >;
 }
 
+interface SecuritySolutionAlertFlyoutRenderProps extends DocViewRenderProps {
+  onAlertUpdated: () => void;
+}
+
 export interface SecuritySolutionAlertFlyoutOverviewTabFeature {
   id: 'security-solution-alert-flyout-overview-tab';
-  render: (hit: DataTableRecord) => JSX.Element;
+  render: (props: SecuritySolutionAlertFlyoutRenderProps) => JSX.Element;
 }
 
 export interface SecuritySolutionAlertFlyoutHeaderTitleFeature {
   id: 'security-solution-alert-flyout-header-title';
-  renderHeader: (hit: DataTableRecord) => JSX.Element;
+  renderHeader: (props: SecuritySolutionAlertFlyoutRenderProps) => JSX.Element;
+}
+
+export interface SecuritySolutionAlertFlyoutFooterFeature {
+  id: 'security-solution-alert-flyout-footer';
+  renderFooter: (props: SecuritySolutionAlertFlyoutRenderProps) => JSX.Element;
+}
+
+export interface SecuritySolutionIOCFlyoutOverviewTabFeature {
+  id: 'security-solution-ioc-flyout-overview-tab';
+  render: (props: DocViewRenderProps) => JSX.Element;
+}
+
+export interface SecuritySolutionIOCFlyoutHeaderFeature {
+  id: 'security-solution-ioc-flyout-header';
+  renderHeader: (props: DocViewRenderProps) => JSX.Element;
+}
+
+export interface SecuritySolutionIOCFlyoutFooterFeature {
+  id: 'security-solution-ioc-flyout-footer';
+  renderFooter: (props: DocViewRenderProps) => JSX.Element;
+}
+
+interface SecuritySolutionAttackFlyoutRenderProps extends DocViewRenderProps {
+  onAttackUpdated: () => void;
+}
+
+export interface SecuritySolutionAttackFlyoutOverviewTabFeature {
+  id: 'security-solution-attack-flyout-overview-tab';
+  render: (props: SecuritySolutionAttackFlyoutRenderProps) => JSX.Element;
+}
+
+export interface SecuritySolutionAttackFlyoutHeaderFeature {
+  id: 'security-solution-attack-flyout-header';
+  renderHeader: (props: SecuritySolutionAttackFlyoutRenderProps) => JSX.Element;
+}
+
+export interface SecuritySolutionAttackFlyoutFooterFeature {
+  id: 'security-solution-attack-flyout-footer';
+  renderFooter: (props: SecuritySolutionAttackFlyoutRenderProps) => JSX.Element;
 }
 
 export type SecuritySolutionFeature =
   | SecuritySolutionCellRendererFeature
   | SecuritySolutionAlertFlyoutOverviewTabFeature
-  | SecuritySolutionAlertFlyoutHeaderTitleFeature;
+  | SecuritySolutionAlertFlyoutHeaderTitleFeature
+  | SecuritySolutionAlertFlyoutFooterFeature
+  | SecuritySolutionIOCFlyoutOverviewTabFeature
+  | SecuritySolutionIOCFlyoutHeaderFeature
+  | SecuritySolutionIOCFlyoutFooterFeature
+  | SecuritySolutionAttackFlyoutOverviewTabFeature
+  | SecuritySolutionAttackFlyoutHeaderFeature
+  | SecuritySolutionAttackFlyoutFooterFeature;
 
 /** ****************************************************************************************/
 

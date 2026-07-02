@@ -19,6 +19,7 @@ import {
   WORKFLOWS_UI_EXECUTION_GRAPH_SETTING_ID,
   WORKFLOWS_UI_VISUAL_EDITOR_SETTING_ID,
 } from '@kbn/workflows';
+import { useWorkflowsCapabilities } from '@kbn/workflows-ui';
 import { useContextOverrideData } from './use_context_override_data';
 import { WorkflowDetailConnectorFlyout } from './workflow_detail_connector_flyout';
 import { useWorkflowActions } from '../../../entities/workflows/model/use_workflow_actions';
@@ -30,6 +31,7 @@ import { setTestStepModalOpenStepId } from '../../../entities/workflows/store/wo
 import { ExecutionGraph } from '../../../features/debug_graph/execution_graph';
 import { useKibana } from '../../../hooks/use_kibana';
 import { useWorkflowUrlState } from '../../../hooks/use_workflow_url_state';
+import { useWorkflowsExperimentalUiSetting } from '../../../hooks/use_workflows_experimental_ui_setting';
 
 const WorkflowYAMLEditor = React.lazy(() =>
   import('../../../widgets/workflow_yaml_editor').then((module) => ({
@@ -58,10 +60,15 @@ export const WorkflowDetailEditor = React.memo<WorkflowDetailEditorProps>(({ hig
   const { runIndividualStep } = useWorkflowActions();
   const { notifications } = useKibana().services;
   const { setSelectedExecution } = useWorkflowUrlState();
+  const { canExecuteWorkflow } = useWorkflowsCapabilities();
 
   const handleStepRun = useCallback(
     async (params: { stepId: string; actionType: string }) => {
       if (params.actionType !== 'run') {
+        return;
+      }
+
+      if (!canExecuteWorkflow) {
         return;
       }
 
@@ -103,17 +110,15 @@ export const WorkflowDetailEditor = React.memo<WorkflowDetailEditorProps>(({ hig
       setSelectedExecution,
       dispatch,
       notifications.toasts,
+      canExecuteWorkflow,
     ]
   );
 
-  // UI settings
-  const isVisualEditorEnabled = useKibana().services.uiSettings?.get<boolean>(
-    WORKFLOWS_UI_VISUAL_EDITOR_SETTING_ID,
-    false
+  const isVisualEditorEnabled = useWorkflowsExperimentalUiSetting(
+    WORKFLOWS_UI_VISUAL_EDITOR_SETTING_ID
   );
-  const isExecutionGraphEnabled = useKibana().services.uiSettings?.get<boolean>(
-    WORKFLOWS_UI_EXECUTION_GRAPH_SETTING_ID,
-    false
+  const isExecutionGraphEnabled = useWorkflowsExperimentalUiSetting(
+    WORKFLOWS_UI_EXECUTION_GRAPH_SETTING_ID
   );
 
   return (

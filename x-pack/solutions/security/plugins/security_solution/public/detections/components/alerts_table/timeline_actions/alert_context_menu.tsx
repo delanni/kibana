@@ -16,6 +16,7 @@ import type { EcsSecurityExtension as Ecs } from '@kbn/securitysolution-ecs';
 import { TableId } from '@kbn/securitysolution-data-table';
 import { flattenObject } from '@kbn/object-utils';
 import { useRunAlertWorkflowPanel } from './use_run_alert_workflow_panel';
+import { useRunDocumentWorkflowPanel } from './use_run_document_workflow_panel';
 import { EndpointExceptionsFlyout } from '../../../../management/pages/endpoint_exceptions/view/components/endpoint_exceptions_flyout';
 import { useIsExperimentalFeatureEnabled } from '../../../../common/hooks/use_experimental_features';
 import { useRuleWithFallback } from '../../../../detection_engine/rule_management/logic/use_rule_with_fallback';
@@ -56,6 +57,7 @@ import type { Rule } from '../../../../detection_engine/rule_management/logic/ty
 import type { AlertTableContextMenuItem } from '../types';
 import { useAlertTagsActions } from './use_alert_tags_actions';
 import { useAlertAssigneesActions } from './use_alert_assignees_actions';
+import { useAddToChatAction } from './use_add_to_chat_action';
 import { timelineDefaults } from '../../../../timelines/store/defaults';
 interface AlertContextMenuProps {
   ariaLabel?: string;
@@ -240,6 +242,28 @@ const AlertContextMenuComponent: React.FC<AlertContextMenuProps> = ({
     ecsRowData,
   });
 
+  const documentForWorkflow = useMemo(() => {
+    const fields: Record<string, unknown> = {};
+    for (const { field, value } of flattenedEcsData) {
+      fields[field] = value;
+    }
+    return [{ _id: ecsRowData._id, _index: ecsRowData._index ?? '', ...fields }];
+  }, [ecsRowData._id, ecsRowData._index, flattenedEcsData]);
+
+  const {
+    runWorkflowMenuItem: runDocumentWorkflowMenuItem,
+    runDocumentWorkflowPanel: runDocumentWorkflowPanels,
+  } = useRunDocumentWorkflowPanel({
+    closePopover,
+    documents: documentForWorkflow,
+  });
+
+  const { addToChatActionItems } = useAddToChatAction({
+    ecsData: flattenedEcsData,
+    onMenuItemClick,
+    alertId: ecsRowData._id,
+  });
+
   const items: AlertTableContextMenuItem[] = useMemo(
     () =>
       !isEvent && ruleId
@@ -251,14 +275,17 @@ const AlertContextMenuComponent: React.FC<AlertContextMenuProps> = ({
             ...alertAssigneesItems,
             ...exceptionActionItems,
             ...(agentId ? osqueryActionItems : []),
+            ...addToChatActionItems,
           ]
         : [
             ...addToCaseActionItems,
+            ...runDocumentWorkflowMenuItem,
             ...(canCreateEndpointEventFilters ? eventFilterActionItems : []),
             ...(agentId ? osqueryActionItems : []),
           ],
     [
       runWorkflowMenuItem,
+      runDocumentWorkflowMenuItem,
       isEvent,
       ruleId,
       addToCaseActionItems,
@@ -270,6 +297,7 @@ const AlertContextMenuComponent: React.FC<AlertContextMenuProps> = ({
       canCreateEndpointEventFilters,
       alertTagsItems,
       alertAssigneesItems,
+      addToChatActionItems,
     ]
   );
 
@@ -283,8 +311,16 @@ const AlertContextMenuComponent: React.FC<AlertContextMenuProps> = ({
       ...alertAssigneesPanels,
       ...statusActionPanels,
       ...runAlertWorkflowPanel,
+      ...runDocumentWorkflowPanels,
     ],
-    [items, alertTagsPanels, alertAssigneesPanels, statusActionPanels, runAlertWorkflowPanel]
+    [
+      items,
+      alertTagsPanels,
+      alertAssigneesPanels,
+      statusActionPanels,
+      runAlertWorkflowPanel,
+      runDocumentWorkflowPanels,
+    ]
   );
 
   const button = useMemo(() => {
@@ -324,6 +360,7 @@ const AlertContextMenuComponent: React.FC<AlertContextMenuProps> = ({
         <EventsTdContent textAlign="center" width={DEFAULT_ACTION_BUTTON_WIDTH}>
           <EuiPopover
             id="singlePanel"
+            aria-label={ariaLabel}
             button={button}
             isOpen={isPopoverOpen}
             closePopover={closePopover}
@@ -332,7 +369,6 @@ const AlertContextMenuComponent: React.FC<AlertContextMenuProps> = ({
             repositionOnScroll
           >
             <EuiContextMenu
-              size="s"
               initialPanelId={0}
               panels={panels}
               data-test-subj="actions-context-menu"

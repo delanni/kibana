@@ -45,10 +45,24 @@ export type {
   DiscoverSessionEsqlTab,
   DiscoverSessionTab,
   DiscoverSessionPanelOverrides,
+  DiscoverSessionEmbeddableByValueProps,
+  DiscoverSessionEmbeddableByReferenceProps,
   DiscoverSessionEmbeddableByValueState,
   DiscoverSessionEmbeddableByReferenceState,
   DiscoverSessionEmbeddableState,
 } from './embeddable';
+export {
+  discoverSessionApiRequestBodySchema,
+  discoverSessionApiResponseSchema,
+  discoverSessionDataSchema,
+} from './api/schema';
+export type {
+  DiscoverSessionApiClassicTab,
+  DiscoverSessionApiEsqlTab,
+  DiscoverSessionApiResponse,
+  DiscoverSessionApiTab,
+  DiscoverSessionData,
+} from './api/schema';
 
 export const plugin = async (context: PluginInitializerContext) => {
   const { DiscoverServerPlugin } = await import('./plugin');

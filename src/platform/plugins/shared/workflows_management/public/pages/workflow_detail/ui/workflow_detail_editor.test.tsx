@@ -9,12 +9,14 @@
 
 import { act, render, waitFor } from '@testing-library/react';
 import React from 'react';
+import { useWorkflowsCapabilities } from '@kbn/workflows-ui';
 import { WorkflowDetailEditor } from './workflow_detail_editor';
 import { createMockStore } from '../../../entities/workflows/store/__mocks__/store.mock';
 import {
   _setComputedDataInternal,
   setYamlString,
 } from '../../../entities/workflows/store/workflow_detail/slice';
+import { mockWorkflowsManagementCapabilities } from '../../../hooks/__mocks__/use_workflows_capabilities';
 import { TestWrapper } from '../../../shared/test_utils';
 
 // Mock hooks
@@ -86,6 +88,19 @@ jest.mock('./use_context_override_data', () => ({
   useContextOverrideData: () => mockUseContextOverrideData,
 }));
 
+jest.mock('../../../hooks/use_workflows_experimental_ui_setting', () => ({
+  useWorkflowsExperimentalUiSetting: jest.fn().mockReturnValue(false),
+}));
+
+jest.mock('@kbn/workflows-ui', () => ({
+  ...jest.requireActual('@kbn/workflows-ui'),
+  useWorkflowsCapabilities: jest.fn(),
+}));
+
+const mockUseWorkflowsCapabilities = useWorkflowsCapabilities as jest.MockedFunction<
+  typeof useWorkflowsCapabilities
+>;
+
 describe('WorkflowDetailEditor', () => {
   const mockYaml =
     'version: "1"\nname: Test Workflow\ntriggers:\n  - type: manual\nsteps:\n  - type: log\n    with:\n      message: hello';
@@ -125,15 +140,10 @@ describe('WorkflowDetailEditor', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
+    mockUseWorkflowsCapabilities.mockReturnValue(mockWorkflowsManagementCapabilities);
+
     mockUseKibana.mockReturnValue({
       services: {
-        uiSettings: {
-          get: jest.fn((key: string) => {
-            if (key === 'workflows.ui.visualEditor') return false;
-            if (key === 'workflows.ui.executionGraph') return false;
-            return false;
-          }),
-        },
         notifications: { toasts: { addError: jest.fn() } },
       },
     });
@@ -194,13 +204,11 @@ describe('WorkflowDetailEditor', () => {
   describe('configuration options', () => {
     it('should check visual editor configuration', () => {
       const { container } = renderEditor();
-      expect(mockUseKibana).toHaveBeenCalled();
       expect(container).toBeTruthy();
     });
 
     it('should check execution graph configuration', () => {
       const { container } = renderEditor();
-      expect(mockUseKibana).toHaveBeenCalled();
       expect(container).toBeTruthy();
     });
   });
@@ -240,6 +248,30 @@ describe('WorkflowDetailEditor', () => {
         new Error('Failed to run step'),
         { title: 'Failed to run step' }
       );
+    });
+
+    it('does not run step or open modal when executeWorkflow is not granted', async () => {
+      mockUseWorkflowsCapabilities.mockReturnValue({
+        ...mockWorkflowsManagementCapabilities,
+        canExecuteWorkflow: false,
+      });
+      mockUseContextOverrideData.mockReturnValue({
+        stepContext: { inputs: {} },
+        schema: {},
+      } as any);
+
+      const mockMutateAsync = jest.fn();
+      mockUseWorkflowActions.mockReturnValue({
+        runIndividualStep: { mutateAsync: mockMutateAsync },
+      });
+
+      const { getByTestId, store } = renderEditor();
+      await act(async () => {
+        getByTestId('test-step-run').click();
+      });
+
+      expect(mockMutateAsync).not.toHaveBeenCalled();
+      expect(store?.getState().detail.testStepModalOpenStepId).toBeUndefined();
     });
   });
 });
